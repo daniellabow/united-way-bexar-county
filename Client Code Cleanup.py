@@ -6,7 +6,7 @@ import pandas as pd
 
 # === STEP 1: load CSV ===
 df = pd.read_csv('211 Call Data_Client Tab_All Years.csv')
-
+df_public = pd.read_csv('uszips.csv')
 
 # === STEP 2: preview the columns ===
 print("Column names:", df.columns.tolist())
@@ -52,9 +52,31 @@ zip_counts = df_clean['ClientAddressus_ClientAddressus_zip'].value_counts().rese
 # rename the columns for clarity
 zip_counts.columns = ['zip_code', 'total_calls']
 
+# make zip codes strings in both dataframes
+zip_counts['zip_code'] = zip_counts['zip_code'].astype(str).str.zfill(5)
+df_public['zip'] = df_public['zip'].astype(str).str.zfill(5)
+
+# extract just ZIP and population
+zip_pop = df_public[['zip', 'population']]
+zip_pop.columns = ['zip_code', 'population']
+
+# merge call counts with population data
+zip_data = pd.merge(zip_counts, zip_pop, on='zip_code', how='left')
+
+# fill missing population data with 1 to avoid division by zero
+zip_data['population'] = zip_data['population'].fillna(1)
+
+# Calculate calls per 1,000 residents
+zip_data['calls_per_1000'] = (zip_data['total_calls'] / zip_data['population']) * 1000
+
+# Save final results
+zip_data.to_csv('Calls_Per_1000.csv', index=False)
+print(zip_data.head(10))
+
 # preview the result
 print("\nTop 10 ZIP codes by call count")
 print(zip_counts.head(10))
 
 zip_counts.to_csv('Calls_By_Zip.csv', index=False)
 
+#calls_per_1000 = (total_calls / population) * 1000
