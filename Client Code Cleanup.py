@@ -80,3 +80,24 @@ print(zip_counts.head(10))
 zip_counts.to_csv('Calls_By_Zip.csv', index=False)
 
 #calls_per_1000 = (total_calls / population) * 1000
+
+
+'''
+CODE FOR VISUALIZATION PUPOSES!!!
+'''
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# sort data for plotting
+zip_data_sorted = zip_data.sort_values(by='zip_code')
+
+# plot
+plt.figure(figsize=(14,6))
+sns.lineplot(data=zip_data_sorted, x='zip_code', y='calls_per_1000', marker='o')
+
+plt.title('2-1-1 Calls Per 1,000 Residents by ZIP Code')
+plt.xlabel('ZIP Code')
+plt.ylabel('Calls Per 1,000 Residents')
+plt.xticks(rotation=90)
+plt.tight_layout()
+plt.show()
