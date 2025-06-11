@@ -30,20 +30,31 @@ print("After:", df_clean.shape)
 # confirming change to file
 df_clean.to_csv('211_Client_Cleaned.csv', index=False)
 
+# check for missing data in zip code column
+print(df['ClientAddressus_ClientAddressus_zip'].isnull().sum())
 
-# === STEP 3: Clean ZIP code column ===
-# Replace 'zip_code' with the correct column name if it's different
-#df['zip_code'] = df['zip_code'].astype(str).str.zfill(5)
+# filling in the blanks lol
+df_clean.loc[:, 'ClientAddressus_ClientAddressus_zip'] = df_clean['ClientAddressus_ClientAddressus_zip'].fillna('Unknown')
+df_clean.loc[:, 'ClientAddressus_ClientAddressus_zip'] = df_clean['ClientAddressus_ClientAddressus_zip'].replace('', 'Unknown')
+df_clean.loc[:, 'ClientAddressus_ClientAddressus_zip'] = df_clean['ClientAddressus_ClientAddressus_zip'].astype(str).str.strip()
+df_clean.loc[:, 'ClientAddressus_ClientAddressus_zip'] = df_clean['ClientAddressus_ClientAddressus_zip'].replace(['', 'nan', '0.0', '0'], 'Unknown')
 
+# updating csv
+df_clean.to_csv('211_Client_Cleaned.csv', index=False)
 
-# === STEP 4: Count calls per ZIP code ===
-#zip_counts = df['zip_code'].value_counts().reset_index()
-#zip_counts.columns = ['zip_code', 'total_calls']
+# just checking how many unkowns there are if any
+unknown_count = df_clean[df_clean['ClientAddressus_ClientAddressus_zip'] == 'Unknown'].shape[0]
+print(f"Number of 'Unknown' ZIP codes: {unknown_count}")
 
+# count calls per ZIP code
+zip_counts = df_clean['ClientAddressus_ClientAddressus_zip'].value_counts().reset_index()
 
-# === STEP 5: View top 10 ZIPs ===
-#print("\nTop 10 ZIP codes by call volume:")
-#print(zip_counts.head(10))
+# rename the columns for clarity
+zip_counts.columns = ['zip_code', 'total_calls']
 
+# preview the result
+print("\nTop 10 ZIP codes by call count")
+print(zip_counts.head(10))
 
-# === Optional: Export the results ===
+zip_counts.to_csv('Calls_By_Zip.csv', index=False)
+
