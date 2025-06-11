@@ -1,4 +1,3 @@
-# united-way-bexar-county
 # 📊 2-1-1 Call Data Analysis — United Way of San Antonio & Bexar County
 
 This project explores 2-1-1 client call data to identify trends in community needs and highlight alignment with sociodemographic inequities in Bexar County, TX. The analysis supports United Way’s internal efforts to enhance outreach, resource allocation, and policy direction.
