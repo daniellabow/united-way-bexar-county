@@ -1,0 +1,29 @@
+# Ignore Python virtual environments
+venv/
+
+
+# Ignore CSV and Excel data files
+*.csv
+*.xlsx
+
+
+# Ignore temporary and backup files
+*.log
+*.tmp
+*.bak
+~$*
+
+
+# Ignore Python compiled files
+__pycache__/
+*.pyc
+
+
+# Ignore Jupyter notebooks if not tracking them
+*.ipynb
+
+
+# VS Code settings
+.vscode/
+
+
