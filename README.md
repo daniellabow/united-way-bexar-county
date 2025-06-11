@@ -36,7 +36,3 @@ We answer this through analysis of:
 This project was completed in partnership with United Way of San Antonio & Bexar County. Due to the confidentiality terms of the Non-Disclosure Agreement (NDA), no CSV or Excel data files from this project are uploaded to this repository. Only scripts and documentation are provided.
 
 If you're interested in collaborating or learning more about the methodology, feel free to reach out!
-
----
-
-Let me know if you want a version that includes setup instructions (e.g. how to install `pandas`, run the script, etc.), or if you want me to make a `.gitignore` that complements this too.
