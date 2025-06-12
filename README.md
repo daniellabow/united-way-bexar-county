@@ -17,7 +17,7 @@ We answer this through analysis of:
 - SPSS (for statistical analysis, not shown in this repo)
 - Tableau (for final dashboard visualization)
 
-## 📁 Project Structure
+## 📁 Current Project Structure
 
 ├── .gitignore
 ├── README.md
