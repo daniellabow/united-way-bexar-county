@@ -1,103 +1,117 @@
 import pandas as pd
 
-
 # to open virtual environment: venv\Scripts\activate
 
-
-# === STEP 1: load CSV ===
+# === STEP 1: load CSVs ===
 df = pd.read_csv('211 Call Data_Client Tab_All Years.csv')
-df_public = pd.read_csv('uszips.csv')
+df_public = pd.read_csv('211 Area Indicators_ZipZCTA.csv')
 
-# === STEP 2: preview the columns ===
+# === STEP 2: preview columns ===
 print("Column names:", df.columns.tolist())
 print(df.head())
 
-
-# check how many rows and columns
+# check original shape
 print(f"Original shape: {df.shape}")
 
-
-# this line removes any rows in the df that are completely identical across all columns
+# remove full-row duplicates
 duplicates = df[df.duplicated()]
 print(f"Number of duplicate rows: {duplicates.shape[0]}")
 
-
-# now, removing duplicates of client id
-# confirming the change went through
+# drop duplicates by client ID
 print("Before:", df.shape)
 df_clean = df.drop_duplicates(subset=['Client_Id'])
 print("After:", df_clean.shape)
-# confirming change to file
+
+# save cleaned version
 df_clean.to_csv('211_Client_Cleaned.csv', index=False)
 
-# check for missing data in zip code column
-print(df['ClientAddressus_ClientAddressus_zip'].isnull().sum())
+# === STEP 3: clean ZIP code column ===
+df_clean['ClientAddressus_ClientAddressus_zip'] = (
+    df_clean['ClientAddressus_ClientAddressus_zip']
+    .fillna('Unknown')
+    .replace('', 'Unknown')
+    .astype(str)
+    .str.strip()
+    .replace(['', 'nan', '0.0', '0'], 'Unknown')
+)
 
-# filling in the blanks lol
-df_clean.loc[:, 'ClientAddressus_ClientAddressus_zip'] = df_clean['ClientAddressus_ClientAddressus_zip'].fillna('Unknown')
-df_clean.loc[:, 'ClientAddressus_ClientAddressus_zip'] = df_clean['ClientAddressus_ClientAddressus_zip'].replace('', 'Unknown')
-df_clean.loc[:, 'ClientAddressus_ClientAddressus_zip'] = df_clean['ClientAddressus_ClientAddressus_zip'].astype(str).str.strip()
-df_clean.loc[:, 'ClientAddressus_ClientAddressus_zip'] = df_clean['ClientAddressus_ClientAddressus_zip'].replace(['', 'nan', '0.0', '0'], 'Unknown')
-
-# updating csv
+# save again just in case
 df_clean.to_csv('211_Client_Cleaned.csv', index=False)
 
-# just checking how many unkowns there are if any
+# check how many unknown ZIPs
 unknown_count = df_clean[df_clean['ClientAddressus_ClientAddressus_zip'] == 'Unknown'].shape[0]
 print(f"Number of 'Unknown' ZIP codes: {unknown_count}")
 
-# count calls per ZIP code
+# === STEP 4: count calls per ZIP ===
 zip_counts = df_clean['ClientAddressus_ClientAddressus_zip'].value_counts().reset_index()
+zip_counts.columns = ['zip_code', 'total_callers']
 
-# rename the columns for clarity
-zip_counts.columns = ['zip_code', 'total_calls']
+# clean ZIP codes to match format
+zip_counts['zip_code'] = zip_counts['zip_code'].astype(str).str.extract(r'(\d{5})')
 
-# make zip codes strings in both dataframes
-zip_counts['zip_code'] = zip_counts['zip_code'].astype(str).str.zfill(5)
-df_public['zip'] = df_public['zip'].astype(str).str.zfill(5)
-
-# extract just ZIP and population
-zip_pop = df_public[['zip', 'population']]
+# === STEP 5: pull ZIP + pop ===
+df_public['zip_code'] = df_public['GEO.display_label'].astype(str).str.extract(r'(\d{5})')
+zip_pop = df_public[['zip_code', 'Pop_Estimate']]
 zip_pop.columns = ['zip_code', 'population']
 
-# merge call counts with population data
+# === STEP 6: merge + calc calls per 1000 ===
 zip_data = pd.merge(zip_counts, zip_pop, on='zip_code', how='left')
-
-# fill missing population data with 1 to avoid division by zero
 zip_data['population'] = zip_data['population'].fillna(1)
+zip_data['callers_per_1000'] = (zip_data['total_callers'] / zip_data['population']) * 1000
+zip_data = zip_data.dropna(subset=['zip_code'])
+zip_data = zip_data[zip_data['population'] > 500]  # or try 750 for smoother scaling
 
-# Calculate calls per 1,000 residents
-zip_data['calls_per_1000'] = (zip_data['total_calls'] / zip_data['population']) * 1000
+# === STEP 7: save final results ===
+zip_data.to_csv('Callers_Per_1000.csv', index=False)
+zip_counts.to_csv('Callers_By_Zip.csv', index=False)
 
-# Save final results
-zip_data.to_csv('Calls_Per_1000.csv', index=False)
+print("\nTop 10 ZIP codes by call count:")
+print(zip_counts.head(10))
 print(zip_data.head(10))
 
-# preview the result
-print("\nTop 10 ZIP codes by call count")
-print(zip_counts.head(10))
-
-zip_counts.to_csv('Calls_By_Zip.csv', index=False)
-
-#calls_per_1000 = (total_calls / population) * 1000
-
 
 '''
-CODE FOR VISUALIZATION PUPOSES!!!
+THIS IS CODE VISUALIZATION!!!
 '''
+
+
 import matplotlib.pyplot as plt
-import seaborn as sns
+# remove extreme outlier ZIP 78205 for visual clarity
+zip_data = zip_data[zip_data['zip_code'] != '78205']
 
-# sort data for plotting
-zip_data_sorted = zip_data.sort_values(by='zip_code')
+# sort by callers per 1,000
+zip_data_sorted = zip_data.sort_values(by='callers_per_1000', ascending=False)
 
-# plot
-plt.figure(figsize=(14,6))
-sns.lineplot(data=zip_data_sorted, x='zip_code', y='calls_per_1000', marker='o')
+'''
+ZIP code 78205 (Downtown San Antonio) had an exceptionally high callers-per-1,000 rate (~2,972) due to a small residential population and the presence of shelters or public services.
+It was removed from the graph for visualization clarity but noted here due to its importance.
+'''
 
-plt.title('2-1-1 Calls Per 1,000 Residents by ZIP Code')
-plt.xlabel('ZIP Code')
-plt.ylabel('Calls Per 1,000 Residents')
-plt.xticks(rotation=90)
+plt.figure(figsize=(20,6))
+plt.bar(zip_data_sorted['zip_code'], zip_data_sorted['callers_per_1000'], color="#ffbed9")  # light pink
+
+plt.title('2-1-1 Callers Per 1,000 Residents by ZIP Code')
+plt.xlabel('ZIP Code (sorted by highest rate)')
+plt.ylabel('Callers Per 1,000 Residents')
+plt.xticks(rotation=90, ha='center', fontsize=9)  # smaller font for spacing
+plt.tight_layout()
+plt.show()
+
+'''
+Okay so now were gonna do calls per zip
+'''
+# sort ALL ZIPs by total callers (raw count)
+zip_counts_sorted = zip_counts.sort_values(by='total_callers', ascending=False)
+
+# clean ZIP codes: convert to string and pad with zeros
+zip_counts_sorted['zip_code'] = zip_counts_sorted['zip_code'].astype(str).str.zfill(5)
+
+plt.figure(figsize=(20,6))
+plt.bar(zip_counts_sorted['zip_code'], zip_counts_sorted['total_callers'], color='#ffbed9')  # light pink
+
+plt.title('2-1-1 Total Callers by ZIP Code')
+plt.xlabel('ZIP Code (sorted by total callers)')
+plt.ylabel('Total Callers')
+plt.xticks(rotation=90, ha='center', fontsize=9)
 plt.tight_layout()
 plt.show()
