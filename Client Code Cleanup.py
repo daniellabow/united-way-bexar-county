@@ -73,45 +73,96 @@ print(zip_data.head(10))
 '''
 THIS IS CODE VISUALIZATION!!!
 '''
-
-
 import matplotlib.pyplot as plt
-# remove extreme outlier ZIP 78205 for visual clarity
-zip_data = zip_data[zip_data['zip_code'] != '78205']
+plt.figure(figsize=(10, 6))
 
-# sort by callers per 1,000
-zip_data_sorted = zip_data.sort_values(by='callers_per_1000', ascending=False)
+# scatter plot
+plt.scatter(zip_data['population'], zip_data['callers_per_1000'], color="#253791", alpha=0.7)  # United Way Blue
 
-'''
-ZIP code 78205 (Downtown San Antonio) had an exceptionally high callers-per-1,000 rate (~2,972) due to a small residential population and the presence of shelters or public services.
-It was removed from the graph for visualization clarity but noted here due to its importance.
-'''
+# highlight outlier
+highlight = zip_data[zip_data['zip_code'] == '78205']
+plt.scatter(highlight['population'], highlight['callers_per_1000'], color="#EF3A43", label='Outliers')  # Red
 
-plt.figure(figsize=(20,6))
-plt.bar(zip_data_sorted['zip_code'], zip_data_sorted['callers_per_1000'], color="#ffbed9")  # light pink
+# label 78205 manually near the top of y-axis
+for _, row in highlight.iterrows():
+    plt.text(row['population'], 950, '78205', fontsize=8, ha='center', color="#EF3A43")
+    plt.annotate('Outlier (Call Rate ~2972)', 
+                 xy=(row['population'], 950), 
+                 xytext=(row['population']+5000, 970), 
+                 arrowprops=dict(arrowstyle="->", color="#A0A0A0"),
+                 fontsize=8, color="#A0A0A0")
 
-plt.title('2-1-1 Callers Per 1,000 Residents by ZIP Code')
-plt.xlabel('ZIP Code (sorted by highest rate)')
-plt.ylabel('Callers Per 1,000 Residents')
-plt.xticks(rotation=90, ha='center', fontsize=9)  # smaller font for spacing
+# label top 10 ZIPs (excluding 78205)
+top_zips = zip_data[zip_data['zip_code'] != '78205'] \
+    .sort_values(by='callers_per_1000', ascending=False) \
+    .head(10)
+
+for _, row in top_zips.iterrows():
+    plt.text(row['population'], row['callers_per_1000'] + 10, row['zip_code'],
+             fontsize=8, ha='center', color="#1A237E")
+
+# chart styling
+plt.title('Callers per 1,000 vs. Population by ZIP Code', color="#253791")
+plt.xlabel('ZIP Code Population', color="#253791")
+plt.ylabel('Callers per 1,000 Residents', color="#253791")
+plt.ylim(0, 1000)
+plt.legend()
+plt.grid(True, color="#E6E6E6", linestyle='--', alpha=0.5)
 plt.tight_layout()
 plt.show()
 
-'''
-Okay so now were gonna do calls per zip
-'''
-# sort ALL ZIPs by total callers (raw count)
-zip_counts_sorted = zip_counts.sort_values(by='total_callers', ascending=False)
+# === CLEAN + FILTER ZIP DATA ===
 
-# clean ZIP codes: convert to string and pad with zeros
+# make a copy to preserve original
+zip_counts_sorted = zip_counts.copy()
+
+# ensure ZIP codes are strings and properly formatted
 zip_counts_sorted['zip_code'] = zip_counts_sorted['zip_code'].astype(str).str.zfill(5)
 
-plt.figure(figsize=(20,6))
-plt.bar(zip_counts_sorted['zip_code'], zip_counts_sorted['total_callers'], color='#ffbed9')  # light pink
+# filter out invalid or missing ZIPs and zero-call entries
+zip_counts_sorted = zip_counts_sorted[
+    (zip_counts_sorted['zip_code'] != 'Unknown') &
+    (zip_counts_sorted['zip_code'].str.match(r'^\d{5}$')) &
+    (zip_counts_sorted['total_callers'] > 0)
+].sort_values(by='total_callers', ascending=False).reset_index(drop=True)
 
-plt.title('2-1-1 Total Callers by ZIP Code')
-plt.xlabel('ZIP Code (sorted by total callers)')
-plt.ylabel('Total Callers')
-plt.xticks(rotation=90, ha='center', fontsize=9)
-plt.tight_layout()
+# === PREPARE CALL RATE DATA ===
+
+# remove outlier ZIP 78205
+zip_data_sorted = zip_data[zip_data['zip_code'] != '78205'].copy()
+
+# sort by callers per 1,000 residents
+zip_data_sorted = zip_data_sorted.sort_values(by='callers_per_1000', ascending=False)
+# === PLOT TOTAL CALLERS BY ZIP CODE ===
+
+fig, ax = plt.subplots(figsize=(30, 8), constrained_layout=True)
+
+ax.plot(zip_counts_sorted['zip_code'], zip_counts_sorted['total_callers'],
+        color="#253791", marker='o', markersize=2, linewidth=1)
+
+ax.set_xticks(range(len(zip_counts_sorted)))
+ax.set_xticklabels(zip_counts_sorted['zip_code'], rotation=60, ha='right', fontsize=6)
+
+ax.set_xlabel('ZIP Code (sorted by total callers)', fontsize=10, color="#253791")
+ax.set_ylabel('Total Callers', fontsize=10, labelpad=15, color="#253791")
+ax.set_title('2-1-1 Total Callers by ZIP Code', fontsize=12, color="#253791")
+ax.grid(axis='y', linestyle='--', alpha=0.5, color="#E6E6E6")
+
+plt.show()
+
+# === PLOT CALLERS PER 1,000 RESIDENTS ===
+
+fig, ax = plt.subplots(figsize=(30, 8), constrained_layout=True)
+
+ax.plot(zip_data_sorted['zip_code'], zip_data_sorted['callers_per_1000'],
+        color="#253791", marker='o', markersize=2, linewidth=1)
+
+ax.set_xticks(range(len(zip_data_sorted)))
+ax.set_xticklabels(zip_data_sorted['zip_code'], rotation=60, ha='right', fontsize=6)
+
+ax.set_xlabel('ZIP Code (sorted by callers per 1,000 residents)', fontsize=10, color="#253791")
+ax.set_ylabel('Callers per 1,000 Residents', fontsize=10, labelpad=15, color="#253791")
+ax.set_title('2-1-1 Callers per 1,000 Residents by ZIP Code', fontsize=12, color="#253791")
+ax.grid(axis='y', linestyle='--', alpha=0.5, color="#E6E6E6")
+
 plt.show()
