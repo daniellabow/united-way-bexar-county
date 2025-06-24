@@ -47,16 +47,14 @@ fig = px.choropleth(
     locations='zip_code',
     featureidkey='properties.ZCTA5CE10',
     color='poverty_rate',
-    color_continuous_scale='RdPu',
+    color_continuous_scale=['#e6eaf5', '#aab3df', '#6d7ec2', '#253791'],  # Light to UW Blue
     scope='usa',
     labels={'poverty_rate': 'Poverty Rate'},
     title='Poverty Rate by ZIP Code (2-1-1 Alamo Region)'
 )
-
 fig.update_geos(fitbounds="locations", visible=False)
 fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
 fig.show()
-
 
 # ALICE rate map
 fig = px.choropleth(
@@ -65,11 +63,14 @@ fig = px.choropleth(
     locations='zip_code',
     featureidkey='properties.ZCTA5CE10',
     color='alice_rate',
-    color_continuous_scale='Pinkyl',
+    color_continuous_scale=['#fff4e0', '#ffd27a', '#fdb913', '#e29400'],  # Light to UW Yellow/Gold
     scope='usa',
     labels={'alice_rate': 'ALICE Rate'},
     title='ALICE Rate by ZIP Code (2-1-1 Alamo Region)'
 )
+fig.update_geos(fitbounds="locations", visible=False)
+fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
+fig.show()
 
 '''
 alice_rate:
@@ -82,10 +83,6 @@ but don't earn enough to meet basic cost-of-living needs (housing, food, childca
 higher alice_rate = more people living paycheck to paycheck or struggling to stay afloat 
 '''
 
-fig.update_geos(fitbounds="locations", visible=False)
-fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
-fig.show()
-
 
 # poverty + ALICE
 fig = px.choropleth(
@@ -94,12 +91,11 @@ fig = px.choropleth(
     locations='zip_code',
     featureidkey='properties.ZCTA5CE10',
     color='econ_instability',
-    color_continuous_scale='PuRd',
+    color_continuous_scale=['#fde3e6', '#f49ca1', '#e85c70', '#e21737'],  # Light to UW Red
     scope='usa',
     labels={'econ_instability': 'Poverty + ALICE Rate'},
     title='Economic Instability by ZIP Code (Poverty + ALICE)'
 )
-
 fig.update_geos(fitbounds="locations", visible=False)
 fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
 fig.show()
