@@ -1,9 +1,27 @@
 import pandas as pd
 
-# STEP 1: load the cleaned ZIP indicator data
+'''
+This Python script processes and visualizes economic hardship data by ZIP code for the 2-1-1 Alamo Region.
+
+It serves as a cleanup and preparation step for ZIP-level poverty and ALICE metrics using the 
+'211 Area Indicators_ZipZCTA.csv' dataset provided by the nonprofit partner.
+
+What it does:
+- Extracts 5-digit ZIP codes and selects key columns: poverty rate and ALICE rate
+- Creates a new column (`econ_instability`) which combines poverty + ALICE for a broader view of need
+- Sorts and saves a list of top ZIP codes with the highest economic instability
+- Produces three choropleth maps (poverty, ALICE, and combined instability) for geographic visualization
+
+These outputs are useful for identifying ZIP codes facing the greatest economic hardship and will support 
+further correlation and equity analysis in subsequent scripts (e.g., comparing 2-1-1 callers per ZIP to local need).
+
+Note: This file does not handle 2-1-1 call data. It focuses exclusively on census-style indicators of economic instability.
+'''
+
+# load the cleaned ZIP indicator data
 df = pd.read_csv('211 Area Indicators_ZipZCTA.csv')
 
-# STEP 2: extract and clean relevant columns
+# extract and clean relevant columns
 df['zip_code'] = df['GEO.display_label'].astype(str).str.extract(r'(\d{5})')
 
 df_econ = df[['zip_code', 'Pct_Poverty_Households', 'Pct_Below.ALICE_Households']]
@@ -12,14 +30,14 @@ df_econ.columns = ['zip_code', 'poverty_rate', 'alice_rate']
 # create a combined instability score (just for ranking purposes)
 df_econ['econ_instability'] = df_econ['poverty_rate'] + df_econ['alice_rate']
 
-# STEP 3: sort by economic instability
+# sort by economic instability
 top_instability = df_econ.sort_values(by='econ_instability', ascending=False)
 
-# STEP 4: preview top ZIPs
+# preview top ZIPs
 print("Top 10 ZIPs by economic instability:")
 print(top_instability.head(10))
 
-# STEP 5: save to CSV
+# save to CSV
 top_instability.to_csv('Top_ZIPs_Economic_Instability.csv', index=False)
 top_instability['zip_code'] = top_instability['zip_code'].astype(str).str.zfill(5)
 
@@ -28,12 +46,12 @@ import plotly.express as px
 import matplotlib.pyplot as plt
 
 '''
-poverty_rate:
-this is the percentage of households in a ZIP code that are living below the federal poverty line.
+poverty_rate Definition:
+This is the percentage of households in a ZIP code that are living below the federal poverty line.
 
-a higher number here = more economic hardship in that area.
+A higher number here = more economic hardship in that area.
 
-example:
+Example:
 
 poverty_rate = 0.40 → 40% of households are in poverty
 
@@ -73,14 +91,14 @@ fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
 fig.show()
 
 '''
-alice_rate:
-this represents the percentage of households that are above poverty but below the ALICE threshold, meaning they:
+alice_rate Definition:
+This represents the percentage of households that are above poverty but below the ALICE threshold, meaning they:
 
-earn too much to qualify as "poverty"
+Earn too much to qualify as "poverty"
 
-but don't earn enough to meet basic cost-of-living needs (housing, food, childcare, etc.)
+But don't earn enough to meet basic cost-of-living needs (housing, food, childcare, etc.)
 
-higher alice_rate = more people living paycheck to paycheck or struggling to stay afloat 
+Higher alice_rate = More people living paycheck to paycheck or struggling to stay afloat 
 '''
 
 
@@ -102,11 +120,9 @@ fig.show()
 
 '''
 econ_instability = poverty_rate + alice_rate
-so this is a combined view of both:
+So this is a combined view of both:
 
-households in poverty
+Households in poverty and households in that financial gray area (ALICE)
 
-and households in that financial gray area (ALICE)
-
-higher econ_instability = overall more economic hardship in the area.
+Higher econ_instability = Overall more economic hardship in the area.
 '''
