@@ -141,7 +141,7 @@ plt.show()
 
 
 '''
-2-1-1 Total Callers by ZIP Code
+2-1-1 Total Callers by ZIP Code Line Graph
 '''
 
 # make a copy to preserve original
@@ -179,7 +179,7 @@ ax.grid(axis='y', linestyle='--', alpha=0.5, color="#E6E6E6")
 plt.show()
 
 '''
-2-1-1 Callers per 1,000 Residents
+2-1-1 Callers per 1,000 Residents Line Graph
 '''
 zip_data_sorted = zip_data_sorted.sort_values(by='callers_per_1000', ascending=False)
 

@@ -137,23 +137,98 @@ Now what we need specifically for the Spearmens code later on is a rate, the fol
 We're pulling from ZIP-level population and calculating callers per 1,000 residents
 '''
 
-# pull ZIP pop from area indicators
+# count unique callers by ZIP
+zip_counts = final_callers['zip_code'].value_counts().reset_index()
+zip_counts.columns = ['zip_code', 'total_callers']
+
+# get ZIP population
 zip_pop = df_area[['zip_code', 'Pop_Estimate']].dropna()
 zip_pop.columns = ['zip_code', 'population']
 
-# merge pop with caller counts
+# merge caller counts with population
 zip_data = pd.merge(zip_counts, zip_pop, on='zip_code', how='left')
 
-# fill missing pop w/ 1 to avoid division issues
+# fill missing population with 1 to avoid divide-by-zero
 zip_data['population'] = zip_data['population'].fillna(1)
 
-# calc callers per 1,000
+# calc callers per 1,000 residents
 zip_data['callers_per_1000'] = (zip_data['total_callers'] / zip_data['population']) * 1000
 
 # save final cleaned and enriched dataset
 zip_data.to_csv('Filtered_Num_Clients_By_ZIP.csv', index=False)
 
-# preview output
+# preview top ZIPs
 print("\nTop ZIPs by callers per 1,000 residents:")
 print(zip_data.sort_values(by='callers_per_1000', ascending=False).head(10))
 
+'''
+FINALLY, lets visualize all this scrumptious code
+'''
+import matplotlib.pyplot as plt
+
+# load csv
+df_visual = pd.read_csv("Filtered_Num_Clients_By_ZIP.csv")
+
+# format zip_code as 5-digit strings
+df_visual['zip_code'] = df_visual['zip_code'].astype(str).str.zfill(5)
+
+# united way colors
+blue = '#00529B'
+red = '#EF3A47'
+yellow = '#FDB913'
+
+# scatter plot: callers per 1,000 vs pop
+plt.figure(figsize=(12, 6))
+plt.scatter(df_visual['population'], df_visual['callers_per_1000'], color=red, alpha=0.7)
+plt.title('2-1-1 Callers per 1,000 vs. Population by ZIP Code', fontsize=14)
+plt.xlabel('Population')
+plt.ylabel('Callers per 1,000 Residents')
+plt.grid(True, linestyle='--', alpha=0.5)
+
+# identify the top outlier (highest callers_per_1000)
+outlier = df_visual.loc[df_visual['callers_per_1000'].idxmax()]
+
+# exclude outlier and get next top 10
+top10 = df_visual[df_visual['zip_code'] != outlier['zip_code']].nlargest(10, 'callers_per_1000')
+
+# label the outlier
+plt.annotate(f"{outlier['zip_code']} (OUTLIER)",
+             xy=(outlier['population'], outlier['callers_per_1000']),
+             xytext=(outlier['population'] + 1000, outlier['callers_per_1000'] + 5),
+             arrowprops=dict(arrowstyle='->', color='black'),
+             fontsize=9, fontweight='bold', color='black')
+
+# label top 10 ZIPs
+for _, row in top10.iterrows():
+    plt.annotate(row['zip_code'],
+                 xy=(row['population'], row['callers_per_1000']),
+                 xytext=(row['population'] + 500, row['callers_per_1000'] + 2),
+                 fontsize=8, color='black')
+
+plt.tight_layout()
+plt.show()
+
+# sort by ZIP for clean line graphs
+df_visual_sorted = df_visual.sort_values(by='zip_code')
+
+# line Graph: total callers by ZIP
+plt.figure(figsize=(16, 6))
+plt.plot(df_visual_sorted['zip_code'], df_visual_sorted['total_callers'], marker='o', markersize=4, color=blue)
+plt.title('2-1-1 Total Callers by ZIP Code', fontsize=14)
+plt.xlabel('ZIP Code')
+plt.ylabel('Total Callers')
+plt.xticks(rotation=90, fontsize=8)
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.show()
+
+# line graph: callers per 1,000 by ZIP
+plt.figure(figsize=(16, 6))
+plt.plot(df_visual_sorted['zip_code'], df_visual_sorted['callers_per_1000'], marker='o', markersize=4, color=yellow)
+plt.title('2-1-1 Callers per 1,000 Residents by ZIP Code', fontsize=14)
+plt.xlabel('ZIP Code')
+plt.ylabel('Callers per 1,000 Residents')
+plt.xticks(rotation=90, fontsize=8)
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.show()
