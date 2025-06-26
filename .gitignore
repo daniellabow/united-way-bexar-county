@@ -1,29 +1,31 @@
-# Ignore Python virtual environments
-venv/
+# ignore Python virtual environments
+/venv/
 
 
-# Ignore CSV and Excel data files
+# ignore CSV and Excel data files
 *.csv
 *.xlsx
 
-
-# Ignore temporary and backup files
+# ignore temporary and backup files
 *.log
 *.tmp
 *.bak
 ~$*
 
+# added code to exclude images in graphs folder in which data visualization is shown
+/graphs/
 
-# Ignore Python compiled files
+
+# ignore Python compiled files
 __pycache__/
 *.pyc
 
 
-# Ignore Jupyter notebooks if not tracking them
+# ignore Jupyter notebooks if not tracking them
 *.ipynb
 
 
-# VS Code settings
+# VS code settings
 .vscode/
 
 
