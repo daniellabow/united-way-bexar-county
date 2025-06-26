@@ -12,21 +12,10 @@ We answer this through analysis of:
 - Demographic trends of clients using 2-1-1
 
 ## 🛠️ Tools Used
-- Python (pandas)
+- Python (pandas, matplotlib, sklearn, ast, plotly, scipy)
 - Excel
 - SPSS (for statistical analysis, not shown in this repo)
 - Tableau (for final dashboard visualization)
-
-## 📁 Current Project Structure
-
-├── .gitignore
-├── README.md
-├── venv/ # Python virtual environment (ignored)
-├── Zip_Populations.csv # Not included (see NDA note)
-├── Calls_By_Zip.csv # Not included
-├── Calls_Per_1000_By_Zip.csv # Not included
-├── Client Code Cleanup.py # Python script for cleaning and processing data
-├── analyze_zip_calls.py # Python script to summarize and calculate rates
 
 > ⚠️ **Data files are not included in this repository due to an NDA (Non-Disclosure Agreement). Only the code is available.**
 
