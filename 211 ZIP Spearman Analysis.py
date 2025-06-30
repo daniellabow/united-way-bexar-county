@@ -1,12 +1,135 @@
 import pandas as pd
 from scipy.stats import spearmanr
+import matplotlib.pyplot as plt
+import seaborn as sns
+# to open virtual environment: venv\Scripts\activate
 
-# load data from CSV files created in 'Client ZIP Code Cleanup' and 'Poverty Cleanup'
-zip_data = pd.read_csv('Callers_Per_1000.csv')    # CRITERIA: should include 'zip_code', 'total_callers', 'callers_per_1000'
-df_econ = pd.read_csv('Top_ZIPs_Economic_Instabiloty.csv')    # CRITERIA: should include 'zip_code', 'poverty_rate', 'alice_rate', 'econ_instability'
+# load cleaned ZIP-level caller data
+df_callers = pd.read_csv('Filtered_Num_Clients_By_ZIP.csv')
+df_callers['zip_code'] = df_callers['zip_code'].astype(str).str.zfill(5)
 
-# now merge on ZIP code
-merged = pd.merge(zip_data, df_econ, on='zip_code')
-print(f"Merged DataFrame: {merged.shape[0]} rows")
+# load ZIP-level demographic indicators (Poverty & ALICE)
+df_demo = pd.read_csv('211 Area Indicators_ZipZCTA.csv', low_memory=False)
+df_demo['zip_code'] = df_demo['GEO.display_label'].astype(str).str.extract(r'(\d{5})')
+df_demo = df_demo[['zip_code', 'Pct_Poverty_Households', 'Pct_Below.ALICE_Households']]
+df_demo.columns = ['zip_code', 'poverty_rate', 'alice_rate']
 
-# now spearman correlation test code beginsss
+# merge both datasets on ZIP code
+df = pd.merge(df_callers, df_demo, on='zip_code', how='inner')
+
+# drop any rows with missing values just in case
+df = df.dropna(subset=['callers_per_1000', 'poverty_rate', 'alice_rate'])
+
+# add combo metric
+df['poverty_alice_avg'] = (df['poverty_rate'] + df['alice_rate']) / 2
+
+# run spearman correlations
+rho_poverty, pval_poverty = spearmanr(df['callers_per_1000'], df['poverty_rate'])
+rho_alice, pval_alice = spearmanr(df['callers_per_1000'], df['alice_rate'])
+rho_combo, pval_combo = spearmanr(df['callers_per_1000'], df['poverty_alice_avg'])
+
+# print results
+print("\n[Spearman Correlation Results]")
+print(f"Callers per 1,000 vs. Poverty Rate:        ρ = {rho_poverty:.3f}, p = {pval_poverty:.4f}")
+print(f"Callers per 1,000 vs. ALICE Rate:          ρ = {rho_alice:.3f}, p = {pval_alice:.4f}")
+print(f"Callers per 1,000 vs. Poverty+ALICE Avg:   ρ = {rho_combo:.3f}, p = {pval_combo:.4f}")
+
+'''
+VISUALIZATION CODE
+'''
+# Poverty Rate vs Callers per 1,000
+
+sns.set_style('whitegrid')
+
+plt.figure(figsize=(16, 9))
+
+# plot scatter + trendline
+sns.regplot(
+    x='poverty_rate', y='callers_per_1000',
+    data=df, lowess=True,
+    scatter_kws={'alpha': 0.6}, line_kws={'color': 'red'}
+)
+
+# Y-limit
+
+# label all ZIPs with slight offset
+for _, row in df.iterrows():
+    offset = 15 if row['zip_code'] == '78205' else 5
+    plt.annotate(
+        row['zip_code'],
+        xy=(row['poverty_rate'], row['callers_per_1000']),
+        xytext=(row['poverty_rate'] + 0.001, row['callers_per_1000'] + offset),
+        fontsize=7,
+        color='black',
+        alpha=0.7
+    )
+
+
+# labels & formatting
+plt.title('Spearman: Callers per 1,000 vs. Poverty Rate', fontsize=16)
+plt.xlabel('Poverty Rate (%)', fontsize=12)
+plt.ylabel('Callers per 1,000 Residents', fontsize=12)
+plt.xticks(fontsize=10)
+plt.yticks(fontsize=10)
+plt.tight_layout()
+plt.show()
+
+
+# ALICE Visuals
+plt.figure(figsize=(16, 9))
+sns.regplot(
+    x='alice_rate', y='callers_per_1000',
+    data=df, lowess=True,
+    scatter_kws={'alpha': 0.6}, line_kws={'color': 'orange'}
+)
+
+
+# label all ZIPs with a small offset
+for _, row in df.iterrows():
+    offset = 15 if row['zip_code'] == '78205' else 5
+    plt.annotate(
+        row['zip_code'],
+        xy=(row['alice_rate'], row['callers_per_1000']),
+        xytext=(row['alice_rate'] + 0.001, row['callers_per_1000'] + offset),
+        fontsize=7,
+        color='black',
+        alpha=0.7
+    )
+
+
+plt.title('Spearman: Callers per 1,000 vs. ALICE Rate', fontsize=16)
+plt.xlabel('ALICE Rate (%)', fontsize=12)
+plt.ylabel('Callers per 1,000 Residents', fontsize=12)
+plt.tight_layout()
+plt.show()
+
+
+# ALICE + Poverty Visuals
+
+df['poverty_alice_avg'] = (df['poverty_rate'] + df['alice_rate']) / 2
+
+plt.figure(figsize=(16, 9))
+sns.regplot(
+    x='poverty_alice_avg', y='callers_per_1000',
+    data=df, lowess=True,
+    scatter_kws={'alpha': 0.6}, line_kws={'color': 'purple'}
+)
+
+# label all ZIPs
+for _, row in df.iterrows():
+    offset = 15 if row['zip_code'] == '78205' else 5
+    plt.annotate(
+        row['zip_code'],
+        xy=(row['poverty_alice_avg'], row['callers_per_1000']),
+        xytext=(row['poverty_alice_avg'] + 0.001, row['callers_per_1000'] + offset),
+        fontsize=7,
+        color='black',
+        alpha=0.7
+    )
+
+
+plt.title('Spearman: Callers per 1,000 vs. Avg of Poverty + ALICE Rate', fontsize=16)
+plt.xlabel('Avg of Poverty + ALICE Rate (%)', fontsize=12)
+plt.ylabel('Callers per 1,000 Residents', fontsize=12)
+plt.tight_layout()
+plt.show()
