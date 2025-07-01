@@ -1,6 +1,9 @@
 import pandas as pd
 import ast
-
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import numpy as np
 
 '''
 This Python file performs a similar role as 'Client ZIP Code Cleanup.py' but is specifically 
@@ -164,71 +167,95 @@ print(zip_data.sort_values(by='callers_per_1000', ascending=False).head(10))
 '''
 FINALLY, lets visualize all this scrumptious code
 '''
-import matplotlib.pyplot as plt
 
-# load csv
-df_visual = pd.read_csv("Filtered_Num_Clients_By_ZIP.csv")
+# load ZIP-level shapefile/GeoJSON
+geojson_url = 'https://raw.githubusercontent.com/OpenDataDE/State-zip-code-geojson/master/tx_texas_zip_codes_geo.min.json'
+gdf = gpd.read_file(geojson_url)
+gdf['zip_code'] = gdf['ZCTA5CE10'].astype(str).str.zfill(5)
 
-# format zip_code as 5-digit strings
-df_visual['zip_code'] = df_visual['zip_code'].astype(str).str.zfill(5)
+# merge with 2-1-1 ZIP data
+df_map = pd.read_csv('Filtered_Num_Clients_By_ZIP.csv')
+df_map['zip_code'] = df_map['zip_code'].astype(str).str.zfill(5)
 
-# united way colors
-blue = '#00529B'
-red = '#EF3A47'
-yellow = '#FDB913'
+gdf = gdf[gdf['zip_code'].isin(df_map['zip_code'])]
+gdf = gdf.merge(df_map, on='zip_code')
 
-# scatter plot: callers per 1,000 vs pop
-plt.figure(figsize=(12, 6))
-plt.scatter(df_visual['population'], df_visual['callers_per_1000'], color=red, alpha=0.7)
-plt.title('2-1-1 Callers per 1,000 vs. Population by ZIP Code', fontsize=14)
-plt.xlabel('Population')
-plt.ylabel('Callers per 1,000 Residents')
-plt.grid(True, linestyle='--', alpha=0.5)
 
-# identify the top outlier (highest callers_per_1000)
-outlier = df_visual.loc[df_visual['callers_per_1000'].idxmax()]
+# !!!! ==== MAP callers per 1,000 ==== !!!!
 
-# exclude outlier and get next top 10
-top10 = df_visual[df_visual['zip_code'] != outlier['zip_code']].nlargest(10, 'callers_per_1000')
+# custom bin edges for callers per 1,000
+rate_bins = [0, 42, 66, 133, 1000, float('inf')]
+rate_labels = ['8-42', '42-66', '66-133', '133-1000', '>1000']
 
-# label the outlier
-plt.annotate(f"{outlier['zip_code']} (OUTLIER)",
-             xy=(outlier['population'], outlier['callers_per_1000']),
-             xytext=(outlier['population'] + 1000, outlier['callers_per_1000'] + 5),
-             arrowprops=dict(arrowstyle='->', color='black'),
-             fontsize=9, fontweight='bold', color='black')
+# apply manual binning to callers per 1,000
+gdf['rate_quartile'] = pd.cut(gdf['callers_per_1000'], bins=rate_bins, labels=rate_labels, include_lowest=True)
 
-# label top 10 ZIPs
-for _, row in top10.iterrows():
-    plt.annotate(row['zip_code'],
-                 xy=(row['population'], row['callers_per_1000']),
-                 xytext=(row['population'] + 500, row['callers_per_1000'] + 2),
-                 fontsize=8, color='black')
+# define color palette using label strings as keys
+quartile_colors = {
+    '8-42': '#93BAE9',       # light blue
+    '42-66': '#FFD100',      # yellow
+    '66-133': '#EF3A47',     # red
+    '133-1000': '#0A2F5A',   # navy
+    '>1000': '#6A0DAD'       # purple (new outlier color)
+}
+
+gdf['rate_color'] = gdf['rate_quartile'].map(quartile_colors)
+
+fig, ax = plt.subplots(figsize=(11, 11))
+gdf.plot(color=gdf['rate_color'], edgecolor='white', linewidth=0.3, ax=ax)
+ax.set_title('2-1-1 Callers per 1,000 Residents by ZIP Code', fontsize=16)
+ax.set_axis_off()
+
+# legend
+unique_rate_quartiles = gdf[['rate_quartile']].drop_duplicates().sort_values(by='rate_quartile')
+rate_legend_elements = [
+    mpatches.Patch(color=quartile_colors[label], label=label)
+    for label in unique_rate_quartiles['rate_quartile']
+]
+ax.legend(handles=rate_legend_elements, title='Callers per 1,000 (Quartiles)', loc='upper right')
 
 plt.tight_layout()
 plt.show()
 
-# sort by ZIP for clean line graphs
-df_visual_sorted = df_visual.sort_values(by='zip_code')
 
-# line Graph: total callers by ZIP
-plt.figure(figsize=(16, 6))
-plt.plot(df_visual_sorted['zip_code'], df_visual_sorted['total_callers'], marker='o', markersize=4, color=blue)
-plt.title('2-1-1 Total Callers by ZIP Code', fontsize=14)
-plt.xlabel('ZIP Code')
-plt.ylabel('Total Callers')
-plt.xticks(rotation=90, fontsize=8)
-plt.grid(True, linestyle='--', alpha=0.5)
-plt.tight_layout()
-plt.show()
+# !!!! ==== MAP total callers ==== !!!!
 
-# line graph: callers per 1,000 by ZIP
-plt.figure(figsize=(16, 6))
-plt.plot(df_visual_sorted['zip_code'], df_visual_sorted['callers_per_1000'], marker='o', markersize=4, color=yellow)
-plt.title('2-1-1 Callers per 1,000 Residents by ZIP Code', fontsize=14)
-plt.xlabel('ZIP Code')
-plt.ylabel('Callers per 1,000 Residents')
-plt.xticks(rotation=90, fontsize=8)
-plt.grid(True, linestyle='--', alpha=0.5)
+# apply manual binning to total callers (same bins and labels)
+gdf['count_quartile'] = pd.cut(gdf['total_callers'], bins=rate_bins, labels=rate_labels, include_lowest=True)
+
+# define count quartile bins (automated) and get actual bin edge
+count_quartiles, count_bins = pd.qcut(
+    gdf['total_callers'],
+    4,
+    retbins=True,
+    duplicates='drop'
+)
+
+# create readable labels based on bin edges
+count_labels = [f"{int(count_bins[i])}–{int(count_bins[i+1])}" for i in range(len(count_bins)-1)]
+
+# apply quartile labels with actual ranges
+gdf['count_quartile'] = pd.qcut(gdf['total_callers'], 4, labels=count_labels, duplicates='drop')
+
+# define new color palette
+count_quartile_colors = dict(zip(count_labels, ['#93BAE9', '#FFD100', '#EF3A47', '#0A2F5A']))
+
+# assign color for each ZIP
+gdf['count_color'] = gdf['count_quartile'].map(count_quartile_colors)
+
+
+fig, ax = plt.subplots(figsize=(11, 11))
+gdf.plot(color=gdf['count_color'], edgecolor='white', linewidth=0.3, ax=ax)
+ax.set_title('Total 2-1-1 Callers by ZIP Code', fontsize=16)
+ax.set_axis_off()
+
+# legend
+unique_count_quartiles = gdf[['count_quartile']].drop_duplicates().sort_values(by='count_quartile')
+count_legend_elements = [
+    mpatches.Patch(color=count_quartile_colors[label], label=label)
+    for label in unique_count_quartiles['count_quartile']
+]
+ax.legend(handles=count_legend_elements, title='Total Callers (Quartiles)', loc='upper right')
+
 plt.tight_layout()
 plt.show()
