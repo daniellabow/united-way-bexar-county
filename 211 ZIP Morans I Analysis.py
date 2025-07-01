@@ -1,0 +1,266 @@
+import geopandas as gpd
+import pandas as pd
+from esda.moran import Moran
+import matplotlib.pyplot as plt
+from esda.moran import Moran_Local
+from splot.esda import lisa_cluster
+from libpysal.weights import Queen
+
+
+'''
+SPATIAL AUTOCORRELATION ANALYSIS
+
+Morans I:
+Morans I is a global measure of spatial autocorrelation.
+It tells us whether ZIP codes with similar values tend to be 
+spatially clustered (near each other) or randomly scattered.
+
+We're applying Morans I to:
+- Callers per 1,000 residents → to check if high-need ZIPs are geographically concentrated
+- Poverty Rate → to see if high-poverty areas are spatially clustered
+- ALICE Rate → to test spatial patterns among the working poor
+- Average of Poverty + ALICE → to explore compound spatial disadvantage
+
+We're also creating a Bivariate Morans I where we strictly cross reference Economic Instability 
+
+Interpretation of Morans I:
+- Positive values (near +1) → spatial clustering (similar ZIPs near each other)
+- Zero (≈ 0) → random spatial pattern
+- Negative (toward -1) → checkerboard pattern (highs near lows)
+
+A statistically significant Morans I (p < 0.05) suggests that 
+the variable is **not randomly distributed** across space.
+
+Local Indicators of Spatial Association (LISA)
+While Morans I gives us a single summary for the entire area,
+LISA breaks that down **ZIP by ZIP**, identifying:
+
+- High-High (HH): high values surrounded by high → spatial hotspots
+- Low-Low (LL): low values surrounded by low → spatial cold spots
+- High-Low (HL) / Low-High (LH): spatial outliers
+
+We're running LISA for:
+- Callers per 1,000 residents
+- Poverty Rate, ALICE Rate, or combined
+
+The output **LISA Cluster Map** visualizes ZIPs with significant spatial patterns,
+helping us pinpoint where geographically targeted interventions may be needed.
+
+Example use:
+- A High-High ZIP might benefit from more 2-1-1 resources or partner support.
+- A Low-High ZIP (cold ZIP surrounded by need) might be underutilizing services.
+
+'''
+
+geojson_url = 'https://raw.githubusercontent.com/OpenDataDE/State-zip-code-geojson/master/tx_texas_zip_codes_geo.min.json'
+gdf = gpd.read_file(geojson_url)
+gdf['zip_code'] = gdf['ZCTA5CE10'].astype(str).str.zfill(5)
+
+df = pd.read_csv("Filtered_Num_Clients_By_ZIP.csv")
+df['zip_code'] = df['zip_code'].astype(str).str.zfill(5)
+
+# Morans I: Callers per 1,000 & ZIP
+gdf = gdf[gdf['zip_code'].isin(df['zip_code'])]
+gdf = gdf.merge(df[['zip_code', 'callers_per_1000']], on='zip_code')
+w = Queen.from_dataframe(gdf)
+w.transform = 'r'
+y = gdf['callers_per_1000'].fillna(0).values
+moran = Moran(y, w)
+print(f"Moran's I: {moran.I:.4f}")
+print(f"P-value (permutation): {moran.p_sim:.4f}")
+
+# prep for economic instability Morans I
+# load economic indicator data (poverty + ALICE)
+df_demo = pd.read_csv("211 Area Indicators_ZipZCTA.csv")
+df_demo['zip_code'] = df_demo['GEO.display_label'].astype(str).str.extract(r'(\d{5})')
+
+# select and rename relevant columns
+df_demo = df_demo[['zip_code', 'Pct_Poverty_Households', 'Pct_Below.ALICE_Households']]
+df_demo.columns = ['zip_code', 'poverty_rate', 'alice_rate']
+
+# merge into GeoDataFrame
+gdf = gdf.merge(df_demo, on='zip_code', how='left')
+
+gdf['poverty_alice_avg'] = (gdf['poverty_rate'] + gdf['alice_rate'])
+
+# poverty
+moran_pov = Moran(gdf['poverty_rate'].fillna(0).values, w)
+print(f"[Poverty] Moran's I: {moran_pov.I:.4f}, p = {moran_pov.p_sim:.4f}")
+
+# ALICE
+moran_alice = Moran(gdf['alice_rate'].fillna(0).values, w)
+print(f"[ALICE] Moran's I: {moran_alice.I:.4f}, p = {moran_alice.p_sim:.4f}")
+
+# combo
+moran_combo = Moran(gdf['poverty_alice_avg'].fillna(0).values, w)
+print(f"[Poverty+ALICE] Moran's I: {moran_combo.I:.4f}, p = {moran_combo.p_sim:.4f}")
+
+
+'''
+RUNNING LISA FOR MORANS I ECONOMIC INSTABILITY
+'''
+'''
+# LISA for callers per 1,000
+lisa_callers = Moran_Local(gdf['callers_per_1000'].fillna(0).values, w)
+fig, ax = lisa_cluster(lisa_callers, gdf, p=0.05)
+plt.title("LISA Cluster Map: Callers per 1,000")
+plt.tight_layout()
+plt.show()
+
+# LISA for poverty rate
+lisa_pov = Moran_Local(gdf['poverty_rate'].fillna(0).values, w)
+fig, ax = lisa_cluster(lisa_pov, gdf, p=0.05)
+plt.title("LISA Cluster Map: Poverty Rate")
+plt.tight_layout()
+plt.show()
+
+# LISA for ALICE rate
+lisa_alice = Moran_Local(gdf['alice_rate'].fillna(0).values, w)
+fig, ax = lisa_cluster(lisa_alice, gdf, p=0.05)
+plt.title("LISA Cluster Map: ALICE Rate")
+plt.tight_layout()
+plt.show()
+
+# LISA for poverty + ALICE (sum)
+lisa_combo = Moran_Local(gdf['poverty_alice_avg'].fillna(0).values, w)
+fig, ax = lisa_cluster(lisa_combo, gdf, p=0.05)
+plt.title("LISA Cluster Map: Poverty + ALICE (Avg)")
+plt.tight_layout()
+plt.show()
+'''
+
+'''
+CODE FOR BIVARIATE MORANS I (ECONOMIC INSTABILITY & CALLER RATE) & VISUALS
+'''
+# !!!! ==== POVERTY & CALLER RATE CODE & VISUAL ==== !!!!
+
+w = Queen.from_dataframe(gdf)
+w.transform = 'r'
+
+from esda.moran import Moran_Local_BV
+
+biv_poverty = Moran_Local_BV(gdf['poverty_rate'], gdf['callers_per_1000'], w)
+
+# add results to GeoDataFrame
+gdf['biv_poverty_I'] = biv_poverty.Is
+gdf['biv_poverty_p'] = biv_poverty.p_sim
+gdf['biv_poverty_quadrant'] = biv_poverty.q
+gdf['biv_poverty_sig'] = biv_poverty.p_sim < 0.05
+
+# filter to significant results only
+gdf_plot = gdf[gdf['biv_poverty_sig'] == True]
+
+import matplotlib.patches as mpatches
+
+quad_colors = {
+    1: '#FFD100',   # HH – Yellow
+    2: '#0A2F5A',   # LH – Navy
+    3: '#93BAE9',   # LL – Light Blue
+    4: '#D22630'    # HL – Red
+}
+
+quad_labels = {
+    1: 'HH: High Poverty–High Calls = Well Aligned',
+    2: 'LH: Low Poverty–High Calls = Misaligned',
+    3: 'LL: Low Poverty–Low Calls = Well Aligned',
+    4: 'HL: High Poverty–Low Calls = Service Gap'
+}
+
+legend_elements = [
+    mpatches.Patch(color='#FFD100', label='HH: High Poverty–High Calls = Well Aligned'),
+    mpatches.Patch(color='#D22630', label='HL: High Poverty–Low Calls = Service Gap'),
+    mpatches.Patch(color='#0A2F5A', label='LH: Low Poverty–High Calls = Misaligned'),
+    mpatches.Patch(color='#93BAE9', label='LL: Low Poverty–Low Calls = Well Aligned'),
+    mpatches.Patch(color='#E0E0E0', label='Not Statistically Significant')
+]
+
+# create a new column with quadrant label
+gdf['biv_poverty_label'] = gdf['biv_poverty_quadrant'].map(quad_labels)
+gdf['biv_poverty_color'] = gdf['biv_poverty_quadrant'].map(quad_colors)
+
+# apply color only if significant, else light gray
+gdf['biv_poverty_final_color'] = gdf.apply(
+    lambda row: row['biv_poverty_color'] if row['biv_poverty_sig'] else '#E0E0E0',
+    axis=1
+)
+
+# plot
+fig, ax = plt.subplots(figsize=(11, 11))
+gdf.plot(color=gdf['biv_poverty_final_color'], linewidth=0.2, edgecolor='white', ax=ax)
+
+ax.legend(
+    handles=legend_elements,
+    loc='upper right',
+    frameon=True,
+    title='Bivariate LISA Cluster'
+)
+
+ax.set_title("Bivariate Spatial Clustering:\nPoverty Rate vs Callers per 1,000 Residents", fontsize=14)
+ax.axis('off')
+
+plt.tight_layout()
+plt.show()
+
+# !!!! ==== ALICE & CALLER RATE CODE & VISUAL ==== !!!!
+
+w = Queen.from_dataframe(gdf)
+w.transform = 'r'
+
+biv_alice = Moran_Local_BV(gdf['alice_rate'], gdf['callers_per_1000'], w)
+
+gdf['biv_alice_I'] = biv_alice.Is
+gdf['biv_alice_p'] = biv_alice.p_sim
+gdf['biv_alice_q'] = biv_alice.q
+gdf['biv_alice_sig'] = biv_alice.p_sim < 0.05
+
+gdf['biv_alice_label'] = gdf['biv_alice_q'].map(quad_labels)
+gdf['biv_alice_color'] = gdf['biv_alice_q'].map(quad_colors)
+
+gdf['biv_alice_final_color'] = gdf.apply(
+    lambda row: row['biv_alice_color'] if row['biv_alice_sig'] else '#E0E0E0',
+    axis=1
+)
+fig, ax = plt.subplots(figsize=(11, 11))
+gdf.plot(color=gdf['biv_alice_final_color'], linewidth=0.2, edgecolor='white', ax=ax)
+
+ax.legend(handles=legend_elements, loc='upper right', title='Bivariate LISA Cluster')
+ax.set_title("Bivariate Spatial Clustering:\nALICE Rate vs Callers per 1,000 Residents", fontsize=14)
+ax.axis('off')
+
+plt.tight_layout()
+plt.show()
+
+# !!!! ==== ALICE + POVERTY SUM & CALLER RATE CODE & VISUAL ==== !!!!
+
+w = Queen.from_dataframe(gdf)
+w.transform = 'r'
+
+gdf['poverty_alice_sum'] = gdf['poverty_rate'] + gdf['alice_rate']
+
+print(gdf[['poverty_alice_sum', 'callers_per_1000']].head())
+print(gdf[['poverty_alice_sum', 'callers_per_1000']].isna().sum())
+
+biv_combined = Moran_Local_BV(gdf['poverty_alice_sum'], gdf['callers_per_1000'], w)
+
+gdf['biv_comb_I'] = biv_combined.Is
+gdf['biv_comb_p'] = biv_combined.p_sim
+gdf['biv_comb_q'] = biv_combined.q
+gdf['biv_comb_sig'] = biv_combined.p_sim < 0.05
+
+gdf['biv_comb_label'] = gdf['biv_comb_q'].map(quad_labels)
+gdf['biv_comb_color'] = gdf['biv_comb_q'].map(quad_colors)
+
+gdf['biv_comb_final_color'] = gdf.apply(
+    lambda row: row['biv_comb_color'] if row['biv_comb_sig'] else '#E0E0E0',
+    axis=1
+)
+
+fig, ax = plt.subplots(figsize=(11, 11))
+gdf.plot(color=gdf['biv_comb_final_color'], linewidth=0.2, edgecolor='white', ax=ax)
+
+ax.legend(handles=legend_elements, loc='upper right', title='Bivariate LISA Cluster')
+ax.set_title("Bivariate Spatial Clustering:\nPoverty + ALICE vs Callers per 1,000 Residents", fontsize=14)
+ax.axis('off')
+
+plt.tight_layout()
+plt.show()

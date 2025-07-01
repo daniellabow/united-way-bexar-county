@@ -21,7 +21,7 @@ df = pd.merge(df_callers, df_demo, on='zip_code', how='inner')
 df = df.dropna(subset=['callers_per_1000', 'poverty_rate', 'alice_rate'])
 
 # add combo metric
-df['poverty_alice_avg'] = (df['poverty_rate'] + df['alice_rate']) / 2
+df['poverty_alice_avg'] = (df['poverty_rate'] + df['alice_rate'])
 
 # run spearman correlations
 rho_poverty, pval_poverty = spearmanr(df['callers_per_1000'], df['poverty_rate'])
@@ -32,7 +32,7 @@ rho_combo, pval_combo = spearmanr(df['callers_per_1000'], df['poverty_alice_avg'
 print("\n[Spearman Correlation Results]")
 print(f"Callers per 1,000 vs. Poverty Rate:        ρ = {rho_poverty:.3f}, p = {pval_poverty:.4f}")
 print(f"Callers per 1,000 vs. ALICE Rate:          ρ = {rho_alice:.3f}, p = {pval_alice:.4f}")
-print(f"Callers per 1,000 vs. Poverty+ALICE Avg:   ρ = {rho_combo:.3f}, p = {pval_combo:.4f}")
+print(f"Callers per 1,000 vs. Poverty+ALICE Sum:   ρ = {rho_combo:.3f}, p = {pval_combo:.4f}")
 
 '''
 VISUALIZATION CODE
@@ -128,8 +128,8 @@ for _, row in df.iterrows():
     )
 
 
-plt.title('Spearman: Callers per 1,000 vs. Avg of Poverty + ALICE Rate', fontsize=16)
-plt.xlabel('Avg of Poverty + ALICE Rate (%)', fontsize=12)
+plt.title('Spearman: Callers per 1,000 vs. Sum of Poverty + ALICE Rate', fontsize=16)
+plt.xlabel('Sum of Poverty + ALICE Rate (%)', fontsize=12)
 plt.ylabel('Callers per 1,000 Residents', fontsize=12)
 plt.tight_layout()
 plt.show()
