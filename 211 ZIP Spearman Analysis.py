@@ -131,8 +131,11 @@ plt.ylabel('Callers per 1,000 Residents', fontsize=12)
 plt.tight_layout()
 plt.show()
 
+
 '''
-CODE FOR EXCLUDING ZIP 78205 - SPECIFICALLY REQUESTED BY NONPROFIT
+
+!!!!! ===== CODE FOR EXCLUDING ZIP 78205 - SPECIFICALLY REQUESTED BY NONPROFIT ===== !!!!!
+
 '''
 # remove ZIP 78205 (downtown outlier)
 df = df[df['zip_code'] != '78205']
@@ -228,6 +231,93 @@ for _, row in df.iterrows():
         alpha=0.7
     )
 
+plt.title('Spearman: Callers per 1,000 vs. Sum of Poverty + ALICE Rate', fontsize=16)
+plt.xlabel('Sum of Poverty + ALICE Rate (%)', fontsize=12)
+plt.ylabel('Callers per 1,000 Residents', fontsize=12)
+plt.tight_layout()
+plt.show()
+
+
+'''
+
+!!!!!! ====== NONPROFIT REQUESTED ZOOMED IN SPEARMEN VISUALS - EXCLUDING OUTLIER ====== !!!!!!
+
+'''
+df = df[df['zip_code'] != '78205']
+
+# !!!! ==== POVERTY RATE & CALLER RATE - NO 78205 ==== !!!!
+
+sns.set_style('whitegrid')
+
+plt.figure(figsize=(16, 9))
+sns.regplot(
+    x='poverty_rate', y='callers_per_1000',
+    data=df, lowess=True,
+    scatter_kws={'alpha': 0.6}, line_kws={'color': 'red'}
+)
+plt.ylim(0, 400)            # ADDED CHANGE IN CODE FOR VISUAL
+for _, row in df.iterrows():
+    plt.annotate(
+        row['zip_code'],
+        xy=(row['poverty_rate'], row['callers_per_1000']),
+        xytext=(row['poverty_rate'] + 0.001, row['callers_per_1000'] + 5),
+        fontsize=7,
+        color='black',
+        alpha=0.7
+    )
+plt.title('Spearman: Callers per 1,000 vs. Poverty Rate', fontsize=16)
+plt.xlabel('Poverty Rate (%)', fontsize=12)
+plt.ylabel('Callers per 1,000 Residents', fontsize=12)
+plt.xticks(fontsize=10)
+plt.yticks(fontsize=10)
+plt.tight_layout()
+plt.show()
+
+# !!!! ==== ALICE RATE & CALLER RATE - NO 78205 ==== !!!!
+
+plt.figure(figsize=(16, 9))
+sns.regplot(
+    x='alice_rate', y='callers_per_1000',
+    data=df, lowess=True,
+    scatter_kws={'alpha': 0.6}, line_kws={'color': 'orange'}
+)
+plt.ylim(0, 400)            # ADDED CHANGE IN CODE FOR VISUAL
+for _, row in df.iterrows():
+    plt.annotate(
+        row['zip_code'],
+        xy=(row['alice_rate'], row['callers_per_1000']),
+        xytext=(row['alice_rate'] + 0.001, row['callers_per_1000'] + 5),
+        fontsize=7,
+        color='black',
+        alpha=0.7
+    )
+plt.title('Spearman: Callers per 1,000 vs. ALICE Rate', fontsize=16)
+plt.xlabel('ALICE Rate (%)', fontsize=12)
+plt.ylabel('Callers per 1,000 Residents', fontsize=12)
+plt.tight_layout()
+plt.show()
+
+# !!!! ==== ALICE & POVERTY SUM & CALLER RATE - NO 78205 ==== !!!!
+
+df['poverty_alice_avg'] = (df['poverty_rate'] + df['alice_rate'])
+
+plt.figure(figsize=(16, 9))
+sns.regplot(
+    x='poverty_alice_avg', y='callers_per_1000',
+    data=df, lowess=True,
+    scatter_kws={'alpha': 0.6}, line_kws={'color': 'purple'}
+)
+plt.ylim(0, 400)            # ADDED CHANGE IN CODE FOR VISUAL
+# label all ZIPs
+for _, row in df.iterrows():
+    plt.annotate(
+        row['zip_code'],
+        xy=(row['poverty_alice_avg'], row['callers_per_1000']),
+        xytext=(row['poverty_alice_avg'] + 0.01, row['callers_per_1000'] + 5),
+        fontsize=7,
+        color='black',
+        alpha=0.7
+    )
 plt.title('Spearman: Callers per 1,000 vs. Sum of Poverty + ALICE Rate', fontsize=16)
 plt.xlabel('Sum of Poverty + ALICE Rate (%)', fontsize=12)
 plt.ylabel('Callers per 1,000 Residents', fontsize=12)
