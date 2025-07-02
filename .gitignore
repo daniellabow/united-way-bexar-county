@@ -6,6 +6,9 @@
 *.csv
 *.xlsx
 
+# ignore tableau
+*.twbr
+
 # ignore temporary and backup files
 *.log
 *.tmp
