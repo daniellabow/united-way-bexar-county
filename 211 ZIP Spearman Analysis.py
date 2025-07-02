@@ -5,7 +5,7 @@ import seaborn as sns
 # to open virtual environment: venv\Scripts\activate
 
 # load cleaned ZIP-level caller data
-df_callers = pd.read_csv('Filtered_Num_Clients_By_ZIP.csv')
+df_callers = pd.read_csv('New_211_Client_Cleaned.csv')
 df_callers['zip_code'] = df_callers['zip_code'].astype(str).str.zfill(5)
 
 # load ZIP-level demographic indicators (Poverty & ALICE)
@@ -102,12 +102,9 @@ plt.show()
 
 
 # ALICE + Poverty Visuals
-
-df['poverty_alice_avg'] = (df['poverty_rate'] + df['alice_rate'])
-
 plt.figure(figsize=(16, 9))
 sns.regplot(
-    x='poverty_alice_avg', y='callers_per_1000',
+    x='poverty_alice_sum', y='callers_per_1000',
     data=df, lowess=True,
     scatter_kws={'alpha': 0.6}, line_kws={'color': 'purple'}
 )
@@ -117,8 +114,8 @@ for _, row in df.iterrows():
     offset = 15 if row['zip_code'] == '78205' else 5
     plt.annotate(
         row['zip_code'],
-        xy=(row['poverty_alice_avg'], row['callers_per_1000']),
-        xytext=(row['poverty_alice_avg'] + 0.001, row['callers_per_1000'] + offset),
+        xy=(row['poverty_alice_sum'], row['callers_per_1000']),
+        xytext=(row['poverty_alice_sum'] + 0.001, row['callers_per_1000'] + offset),
         fontsize=7,
         color='black',
         alpha=0.7
@@ -207,12 +204,9 @@ plt.tight_layout()
 plt.show()
 
 # !!!! ==== ALICE & POVERTY SUM & CALLER RATE - NO 78205 ==== !!!!
-
-df['poverty_alice_avg'] = (df['poverty_rate'] + df['alice_rate'])
-
 plt.figure(figsize=(16, 9))
 sns.regplot(
-    x='poverty_alice_avg', y='callers_per_1000',
+    x='poverty_alice_sum', y='callers_per_1000',
     data=df, lowess=True,
     scatter_kws={'alpha': 0.6}, line_kws={'color': 'purple'}
 )
@@ -224,8 +218,8 @@ plt.ylim(0, 1000)
 for _, row in df.iterrows():
     plt.annotate(
         row['zip_code'],
-        xy=(row['poverty_alice_avg'], row['callers_per_1000']),
-        xytext=(row['poverty_alice_avg'] + 0.01, row['callers_per_1000'] + 5),
+        xy=(row['poverty_alice_sum'], row['callers_per_1000']),
+        xytext=(row['poverty_alice_sum'] + 0.01, row['callers_per_1000'] + 5),
         fontsize=7,
         color='black',
         alpha=0.7
@@ -299,11 +293,9 @@ plt.show()
 
 # !!!! ==== ALICE & POVERTY SUM & CALLER RATE - NO 78205 ==== !!!!
 
-df['poverty_alice_avg'] = (df['poverty_rate'] + df['alice_rate'])
-
 plt.figure(figsize=(16, 9))
 sns.regplot(
-    x='poverty_alice_avg', y='callers_per_1000',
+    x='poverty_alice_sum', y='callers_per_1000',
     data=df, lowess=True,
     scatter_kws={'alpha': 0.6}, line_kws={'color': 'purple'}
 )
@@ -312,8 +304,8 @@ plt.ylim(0, 400)            # ADDED CHANGE IN CODE FOR VISUAL
 for _, row in df.iterrows():
     plt.annotate(
         row['zip_code'],
-        xy=(row['poverty_alice_avg'], row['callers_per_1000']),
-        xytext=(row['poverty_alice_avg'] + 0.01, row['callers_per_1000'] + 5),
+        xy=(row['poverty_alice_sum'], row['callers_per_1000']),
+        xytext=(row['poverty_alice_sum'] + 0.01, row['callers_per_1000'] + 5),
         fontsize=7,
         color='black',
         alpha=0.7
@@ -323,3 +315,21 @@ plt.xlabel('Sum of Poverty + ALICE Rate (%)', fontsize=12)
 plt.ylabel('Callers per 1,000 Residents', fontsize=12)
 plt.tight_layout()
 plt.show()
+
+# CODE TO CREATE SPEARMEN CSV
+spearman_results = {
+    'Metric': ['Poverty Rate', 'ALICE Rate', 'Poverty + ALICE Sum'],
+    'Spearman ρ': [rho_poverty, rho_alice, rho_combo],
+    'p-value': [pval_poverty, pval_alice, pval_combo]
+}
+df_spearman = pd.DataFrame(spearman_results)
+df_spearman.to_csv('211_Spearman_Correlation_Results.csv', index=False)
+
+# save merged df to CSV for future reference
+df.to_csv('211_Merged_ZIP_Economic_Instability.csv', index=False)
+print("[Merged data saved to '211_Merged_ZIP_Economic_Instability.csv']")
+
+# save cleaned demographic data to CSV for future reference
+df_demo = df_demo.dropna()
+df_demo.to_csv('211_Demographic_Data_Cleaned.csv', index=False)
+print("[Merged data saved to '211_Demographic_Data_Cleaned.csv']")
