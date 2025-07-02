@@ -67,6 +67,13 @@ for y in range(5):
                 color='black',
                 fontsize=10
             )
+        else:
+            ax.text(
+                x + 0.5, y + 0.5, str("0"),
+                va='center', ha='center',
+                color='black',
+                fontsize=10
+            )
 
 ax.set_xlim(0, 5)
 ax.set_ylim(0, 5)
@@ -75,8 +82,8 @@ ax.set_yticks(np.arange(5) + 0.5)
 ax.set_xticklabels(['1', '2', '3', '4', '5'])
 ax.set_yticklabels(['5', '4', '3', '2', '1'])  # Top to bottom
 ax.set_xlabel("Poverty Rate")
-ax.set_ylabel("Call Rate")
-ax.set_title("ZIP Count by Call Rate & Poverty Rate Quantiles")
+ax.set_ylabel("Caller Rate")
+ax.set_title("ZIP Count by Caller Rate & Poverty Rate")
 ax.invert_yaxis()
 ax.set_aspect('equal')
 plt.grid(False)
@@ -122,6 +129,13 @@ for y in range(5):
                 color='black',
                 fontsize=10
             )
+        else:
+            ax.text(
+                x + 0.5, y + 0.5, str("0"),
+                va='center', ha='center',
+                color='black',
+                fontsize=10
+            )
 
 ax.set_xlim(0, 5)
 ax.set_ylim(0, 5)
@@ -130,8 +144,8 @@ ax.set_yticks(np.arange(5) + 0.5)
 ax.set_xticklabels(['1', '2', '3', '4', '5'])
 ax.set_yticklabels(['5', '4', '3', '2', '1'])  # Top to bottom
 ax.set_xlabel("ALICE Rate")
-ax.set_ylabel("Call Rate")
-ax.set_title("ZIP Count by Call Rate & ALICE Rate Quantiles")
+ax.set_ylabel("Caller Rate")
+ax.set_title("ZIP Count by Caller Rate & ALICE Rate")
 ax.invert_yaxis()
 ax.set_aspect('equal')
 plt.grid(False)
@@ -178,6 +192,13 @@ for y in range(5):
                 color='black',
                 fontsize=10
             )
+        else:
+            ax.text(
+                x + 0.5, y + 0.5, str("0"),
+                va='center', ha='center',
+                color='black',
+                fontsize=10
+            )
 
 ax.set_xlim(0, 5)
 ax.set_ylim(0, 5)
@@ -186,8 +207,8 @@ ax.set_yticks(np.arange(5) + 0.5)
 ax.set_xticklabels(['1', '2', '3', '4', '5'])
 ax.set_yticklabels(['5', '4', '3', '2', '1'])  # Top to bottom
 ax.set_xlabel("ALICE Poverty Sum")
-ax.set_ylabel("Call Rate")
-ax.set_title("ZIP Count by Call Rate & ALICE + Poverty Sum")
+ax.set_ylabel("Caller Rate")
+ax.set_title("ZIP Count by Caller Rate & ALICE + Poverty Sum")
 ax.invert_yaxis()
 ax.set_aspect('equal')
 plt.grid(False)
