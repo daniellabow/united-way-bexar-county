@@ -192,11 +192,11 @@ gdf['rate_quartile'] = pd.cut(gdf['callers_per_1000'], bins=rate_bins, labels=ra
 
 # define color palette using label strings as keys
 quartile_colors = {
-    '8-42': '#93BAE9',       # light blue
-    '42-66': '#FFD100',      # yellow
-    '66-133': '#EF3A47',     # red
-    '133-1000': '#0A2F5A',   # navy
-    '>1000': '#6A0DAD'       # purple (new outlier color)
+    '8-42': '#A7D2FF',
+    '42-66': '#5082F0',
+    '66-133': '#0044B5',
+    '133-1000': '#21296B',
+    '>1000': "#00095B"
 }
 
 gdf['rate_color'] = gdf['rate_quartile'].map(quartile_colors)
@@ -238,7 +238,7 @@ count_labels = [f"{int(count_bins[i])}–{int(count_bins[i+1])}" for i in range(
 gdf['count_quartile'] = pd.qcut(gdf['total_callers'], 4, labels=count_labels, duplicates='drop')
 
 # define new color palette
-count_quartile_colors = dict(zip(count_labels, ['#93BAE9', '#FFD100', '#EF3A47', '#0A2F5A']))
+count_quartile_colors = dict(zip(count_labels, ['#A7D2FF', '#5082F0', '#0044B5', '#21296B']))
 
 # assign color for each ZIP
 gdf['count_color'] = gdf['count_quartile'].map(count_quartile_colors)
