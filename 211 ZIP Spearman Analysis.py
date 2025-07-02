@@ -183,6 +183,9 @@ sns.regplot(
     scatter_kws={'alpha': 0.6}, line_kws={'color': 'orange'}
 )
 
+# y limit
+plt.ylim(0, 1000)
+
 # label all ZIPs
 for _, row in df.iterrows():
     plt.annotate(
@@ -211,12 +214,15 @@ sns.regplot(
     scatter_kws={'alpha': 0.6}, line_kws={'color': 'purple'}
 )
 
+# y limit
+plt.ylim(0, 1000)
+
 # label all ZIPs
 for _, row in df.iterrows():
     plt.annotate(
         row['zip_code'],
-        xy=(row['alice_rate'], row['callers_per_1000']),
-        xytext=(row['alice_rate'] + 0.001, row['callers_per_1000'] + 5),
+        xy=(row['poverty_alice_avg'], row['callers_per_1000']),
+        xytext=(row['poverty_alice_avg'] + 0.01, row['callers_per_1000'] + 5),
         fontsize=7,
         color='black',
         alpha=0.7
