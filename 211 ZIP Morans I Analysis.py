@@ -82,7 +82,7 @@ df_demo.columns = ['zip_code', 'poverty_rate', 'alice_rate']
 # merge into GDF
 gdf = gdf.merge(df_demo, on='zip_code', how='left')
 
-gdf['poverty_alice_avg'] = (gdf['poverty_rate'] + gdf['alice_rate'])
+gdf['poverty_alice_sum'] = (gdf['poverty_rate'] + gdf['alice_rate'])
 
 # poverty
 moran_pov = Moran(gdf['poverty_rate'].fillna(0).values, w)
@@ -93,14 +93,14 @@ moran_alice = Moran(gdf['alice_rate'].fillna(0).values, w)
 print(f"[ALICE] Moran's I: {moran_alice.I:.4f}, p = {moran_alice.p_sim:.4f}")
 
 # combo
-moran_combo = Moran(gdf['poverty_alice_avg'].fillna(0).values, w)
+moran_combo = Moran(gdf['poverty_alice_sum'].fillna(0).values, w)
 print(f"[Poverty+ALICE] Moran's I: {moran_combo.I:.4f}, p = {moran_combo.p_sim:.4f}")
 
 
 '''
 RUNNING LISA FOR MORANS I ECONOMIC INSTABILITY
 '''
-'''
+
 # LISA for callers per 1,000
 lisa_callers = Moran_Local(gdf['callers_per_1000'].fillna(0).values, w)
 fig, ax = lisa_cluster(lisa_callers, gdf, p=0.05)
@@ -123,12 +123,12 @@ plt.tight_layout()
 plt.show()
 
 # LISA for poverty + ALICE (sum)
-lisa_combo = Moran_Local(gdf['poverty_alice_avg'].fillna(0).values, w)
+lisa_combo = Moran_Local(gdf['poverty_alice_sum'].fillna(0).values, w)
 fig, ax = lisa_cluster(lisa_combo, gdf, p=0.05)
-plt.title("LISA Cluster Map: Poverty + ALICE (Avg)")
+plt.title("LISA Cluster Map: Economic Instability")
 plt.tight_layout()
 plt.show()
-'''
+
 
 '''
 CODE FOR BIVARIATE MORANS I (ECONOMIC INSTABILITY & CALLER RATE) & VISUALS
