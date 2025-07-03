@@ -100,7 +100,7 @@ print(f"[Poverty+ALICE] Moran's I: {moran_combo.I:.4f}, p = {moran_combo.p_sim:.
 '''
 RUNNING LISA FOR MORANS I ECONOMIC INSTABILITY
 '''
-
+'''
 # LISA for callers per 1,000
 lisa_callers = Moran_Local(gdf['callers_per_1000'].fillna(0).values, w)
 fig, ax = lisa_cluster(lisa_callers, gdf, p=0.05)
@@ -128,7 +128,7 @@ fig, ax = lisa_cluster(lisa_combo, gdf, p=0.05)
 plt.title("LISA Cluster Map: Economic Instability")
 plt.tight_layout()
 plt.show()
-
+'''
 
 '''
 CODE FOR BIVARIATE MORANS I (ECONOMIC INSTABILITY & CALLER RATE) & VISUALS
@@ -305,7 +305,7 @@ fig, ax = plt.subplots(figsize=(11, 11))
 gdf.plot(color=gdf['biv_comb_final_color'], linewidth=0.2, edgecolor='white', ax=ax)
 
 ax.legend(handles=legend_elements_COMBO, loc='upper right', title='Bivariate LISA Cluster')
-ax.set_title("Bivariate Spatial Clustering:\nPoverty + ALICE vs Callers per 1,000 Residents", fontsize=14)
+ax.set_title("Bivariate Spatial Clustering:\nEconomic Instability vs Callers per 1,000 Residents", fontsize=14)
 ax.axis('off')
 
 plt.tight_layout()
@@ -328,7 +328,7 @@ moran_cols_alice = [
     'biv_alice_q', 'biv_alice_sig', 'biv_alice_label'
 ]
 
-moran_cols_combo = [
+moran_cols_sum = [
     'zip_code', 'poverty_alice_sum', 'callers_per_1000',
     'biv_comb_I', 'biv_comb_p',
     'biv_comb_q', 'biv_comb_sig', 'biv_comb_label'
@@ -338,5 +338,5 @@ gdf = gdf.reset_index(drop=True)
 
 gdf[moran_cols_pov].to_csv('Bivariate_Poverty_vs_CallerRate_LISA.csv', index=False)
 gdf[moran_cols_alice].to_csv('Bivariate_ALICE_vs_CallerRate_LISA.csv', index=False)
-gdf[moran_cols_combo].to_csv('Bivariate_PovertyALICE_vs_CallerRate_LISA.csv', index=False)
+gdf[moran_cols_sum].to_csv('Bivariate_PovertyALICE_vs_CallerRate_LISA.csv', index=False)
 

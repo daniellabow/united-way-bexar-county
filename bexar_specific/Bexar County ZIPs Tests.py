@@ -39,7 +39,7 @@ df_bexar = df_merged[df_merged['county'].str.lower() == 'bexar']
 df_bexar['county'] = 'Bexar'
 
 # save it to a new CSV
-df_bexar.to_csv('Bexar_County_Cleaned_ZIP_Data.csv', index=False)
+df_bexar.to_csv('bexar_specific/Bexar_County_Cleaned_ZIP_Data.csv', index=False)
 
 
 '''
@@ -47,7 +47,7 @@ df_bexar.to_csv('Bexar_County_Cleaned_ZIP_Data.csv', index=False)
      (restricted to ZIPs listed in 'Bexar_County_Cleaned_ZIP_Data.csv')
 '''
 # load newly made csv
-df_bexar_cleaned = pd.read_csv('Bexar_County_Cleaned_ZIP_Data.csv')
+df_bexar_cleaned = pd.read_csv('bexar_specific/Bexar_County_Cleaned_ZIP_Data.csv')
 df_bexar_cleaned['zip_code'] = df_bexar_cleaned['zip_code'].astype(str).str.zfill(5)
 
 # load indicator data
@@ -72,7 +72,7 @@ columns_to_merge = ['zip_code', 'County_Name'] + [
 df_demo_filtered = df_demo_filtered[['zip_code', 'poverty_rate', 'alice_rate']]
 df_merged = df_bexar_cleaned.merge(df_demo_filtered, on='zip_code', how='left')
 
-df_merged.to_csv('Bexar_County_ZIP_Eco_Indicator_Data.csv', index=False)
+df_merged.to_csv('bexar_specific/Bexar_County_ZIP_Eco_Indicator_Data.csv', index=False)
 
 '''
      This is the end of Morans I bexar county map prep
@@ -95,23 +95,22 @@ geojson_url = 'https://raw.githubusercontent.com/OpenDataDE/State-zip-code-geojs
 gdf = gpd.read_file(geojson_url)
 gdf['zip_code'] = gdf['ZCTA5CE10'].astype(str).str.zfill(5)
 
-df = pd.read_csv('Bexar_County_ZIP_Eco_Indicator_Data.csv')
+df = pd.read_csv('bexar_specific/Bexar_County_ZIP_Eco_Indicator_Data.csv')
 df['zip_code'] = df['zip_code'].astype(str).str.zfill(5)
-
-load a Texas counties shapefile that includes Bexar (if you have one)
+'''
+# load a texas counties shapefile that has bexar
 counties = gpd.read_file("path/to/tx_county_shapefile.shp")
 bexar_shape = counties[counties['NAME'].str.lower() == 'bexar']
 
-# 2. Reproject if needed
+# reshape 
 bexar_shape = bexar_shape.to_crs(gdf.crs)
 
-# 3. Spatial clip
+# spatial clip
 gdf = gpd.overlay(gdf, bexar_shape, how='intersection')
-
 
 # filter GDF to only bexar
 gdf = gdf[gdf['zip_code'].isin(df['zip_code'])]
-
+'''
 # merge
 gdf = gdf.merge(df, on='zip_code', how='left')
 
@@ -141,7 +140,7 @@ print(f"[Poverty+ALICE] Moran's I: {moran_combo.I:.4f}, p = {moran_combo.p_sim:.
 '''
 RUNNING LISA FOR MORANS I ECONOMIC INSTABILITY - COMMENT OUT FOR TIME PURPOSES ONCE VISUALS ARE MADE
 '''
-'''
+
 # LISA for callers per 1,000
 lisa_callers = Moran_Local(gdf['callers_per_1000'].fillna(0).values, w)
 fig, ax = lisa_cluster(lisa_callers, gdf, p=0.05)
@@ -164,12 +163,12 @@ plt.tight_layout()
 plt.show()
 
 # LISA for poverty + ALICE (sum)
-lisa_combo = Moran_Local(gdf['poverty_alice_avg'].fillna(0).values, w)
+lisa_combo = Moran_Local(gdf['poverty_alice_sum'].fillna(0).values, w)
 fig, ax = lisa_cluster(lisa_combo, gdf, p=0.05)
-plt.title("LISA Cluster Map: Poverty + ALICE (Avg)")
+plt.title("LISA Cluster Map: Economic Insability")
 plt.tight_layout()
 plt.show()
-'''
+
 
 '''
 CODE FOR BIVARIATE MORANS I (ECONOMIC INSTABILITY & CALLER RATE) & VISUALS
@@ -346,7 +345,7 @@ fig, ax = plt.subplots(figsize=(11, 11))
 gdf.plot(color=gdf['biv_comb_final_color'], linewidth=0.2, edgecolor='white', ax=ax)
 
 ax.legend(handles=legend_elements_COMBO, loc='upper right', title='Bivariate LISA Cluster')
-ax.set_title("Bivariate Spatial Clustering:\nPoverty + ALICE vs Callers per 1,000 Residents", fontsize=14)
+ax.set_title("Bivariate Spatial Clustering:\nEconomic Instability vs Callers per 1,000 Residents", fontsize=14)
 ax.axis('off')
 
 plt.tight_layout()
@@ -377,6 +376,6 @@ moran_cols_combo = [
 
 gdf = gdf.reset_index(drop=True)
 
-gdf[moran_cols_pov].to_csv('Bexar_Bivariate_Poverty_LISA.csv', index=False)
-gdf[moran_cols_alice].to_csv('Bexar_Bivariate_ALICE_LISA.csv', index=False)
-gdf[moran_cols_combo].to_csv('Bexar_Bivariate_Sum_LISA.csv', index=False)
+gdf[moran_cols_pov].to_csv('bexar_specific/Bexar_Bivariate_Poverty_LISA.csv', index=False)
+gdf[moran_cols_alice].to_csv('bexar_specific/Bexar_Bivariate_ALICE_LISA.csv', index=False)
+gdf[moran_cols_combo].to_csv('bexar_specific/Bexar_Bivariate_Sum_LISA.csv', index=False)

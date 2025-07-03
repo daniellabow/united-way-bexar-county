@@ -45,7 +45,7 @@ df_clean = df.drop_duplicates(subset=['Client_Id'])
 print("After:", df_clean.shape)
 
 # save cleaned version
-df_clean.to_csv('Old_211_Client_Cleaned.csv', index=False)
+df_clean.to_csv('starter/Old_211_Client_Cleaned.csv', index=False)
 
 # clean ZIP code column
 df_clean['ClientAddressus_ClientAddressus_zip'] = (
@@ -58,7 +58,7 @@ df_clean['ClientAddressus_ClientAddressus_zip'] = (
 )
 
 # save again just in case
-df_clean.to_csv('211_Client_Cleaned.csv', index=False)
+df_clean.to_csv('starter/Old_211_Client_Cleaned.csv', index=False)
 
 # check how many unknown ZIPs
 unknown_count = df_clean[df_clean['ClientAddressus_ClientAddressus_zip'] == 'Unknown'].shape[0]
@@ -84,8 +84,8 @@ zip_data = zip_data.dropna(subset=['zip_code'])
 zip_data = zip_data[zip_data['population'] > 500]  # or try 750 for smoother scaling
 
 # save final results
-zip_data.to_csv('Old_Callers_Per_1000.csv', index=False)
-zip_counts.to_csv('Old_Callers_By_Zip.csv', index=False)
+zip_data.to_csv('starter/Old_Callers_Per_1000.csv', index=False)
+zip_counts.to_csv('starter/Old_Callers_By_Zip.csv', index=False)
 
 print("\nTop 10 ZIP codes by call count:")
 print(zip_counts.head(10))
