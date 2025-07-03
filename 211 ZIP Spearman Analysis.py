@@ -122,7 +122,7 @@ for _, row in df.iterrows():
     )
 
 
-plt.title('Spearman: Callers per 1,000 vs. Sum of Poverty + ALICE Rate', fontsize=16)
+plt.title('Spearman: Callers per 1,000 vs. Economic Instability', fontsize=16)
 plt.xlabel('Sum of Poverty + ALICE Rate (%)', fontsize=12)
 plt.ylabel('Callers per 1,000 Residents', fontsize=12)
 plt.tight_layout()
@@ -225,7 +225,7 @@ for _, row in df.iterrows():
         alpha=0.7
     )
 
-plt.title('Spearman: Callers per 1,000 vs. Sum of Poverty + ALICE Rate', fontsize=16)
+plt.title('Spearman: Callers per 1,000 vs. Economic Instability', fontsize=16)
 plt.xlabel('Sum of Poverty + ALICE Rate (%)', fontsize=12)
 plt.ylabel('Callers per 1,000 Residents', fontsize=12)
 plt.tight_layout()
@@ -310,7 +310,7 @@ for _, row in df.iterrows():
         color='black',
         alpha=0.7
     )
-plt.title('Spearman: Callers per 1,000 vs. Sum of Poverty + ALICE Rate', fontsize=16)
+plt.title('Spearman: Callers per 1,000 vs. Economic Instability', fontsize=16)
 plt.xlabel('Sum of Poverty + ALICE Rate (%)', fontsize=12)
 plt.ylabel('Callers per 1,000 Residents', fontsize=12)
 plt.tight_layout()
@@ -318,7 +318,7 @@ plt.show()
 
 # CODE TO CREATE SPEARMEN CSV
 spearman_results = {
-    'Metric': ['Poverty Rate', 'ALICE Rate', 'Poverty + ALICE Sum'],
+    'Metric': ['Poverty Rate', 'ALICE Rate', 'Economic Instability'],
     'Spearman ρ': [rho_poverty, rho_alice, rho_combo],
     'p-value': [pval_poverty, pval_alice, pval_combo]
 }

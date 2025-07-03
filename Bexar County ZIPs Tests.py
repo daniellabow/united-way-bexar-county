@@ -1,104 +1,145 @@
-import geopandas as gpd
 import pandas as pd
+import geopandas as gpd
 from esda.moran import Moran
 import matplotlib.pyplot as plt
 from esda.moran import Moran_Local
 from splot.esda import lisa_cluster
 from libpysal.weights import Queen
+'''
+!!!!!! ====== BEXAR COUNTY ZIP CODE CLEANED DATASET ====== !!!!!!
+This script loads the cleaned 211 caller data, extracts ZIP codes, and merges it with county
+information from the original dataset. It filters the data to only include Bexar County ZIP codes and saves the cleaned dataset to a new CSV file.
+The resulting dataset contains caller information along with the corresponding county, specifically for Bexar County ZIP codes.
+This is useful for further analysis or visualization focused on Bexar County.
+'''
 
 # to open virtual environment: venv\Scripts\activate
 
-'''
-SPATIAL AUTOCORRELATION ANALYSIS
+# load your cleaned dataset with ZIP codes
+df_clean = pd.read_csv('New_211_Client_Cleaned.csv')
+df_clean['zip_code'] = df_clean['zip_code'].astype(str).str.zfill(5)
 
-Morans I:
-Morans I is a global measure of spatial autocorrelation.
-It tells us whether ZIP codes with similar values tend to be 
-spatially clustered (near each other) or randomly scattered.
+# load the original dataset that w county info
+df_original = pd.read_csv('211 Call Data_Client Tab_All Years.csv')
+df_original['ClientAddressus_ClientAddressus_zip'] = df_original['ClientAddressus_ClientAddressus_zip'].astype(str).str.zfill(5)
 
-We're applying Morans I to:
-- Callers per 1,000 residents → to check if high-need ZIPs are geographically concentrated
-- Poverty Rate → to see if high-poverty areas are spatially clustered
-- ALICE Rate → to test spatial patterns among the working poor
-- Average of Poverty + ALICE → to explore compound spatial disadvantage
+# create a ZIP -> county mapping from og dataset
+client_data = df_original[['ClientAddressus_ClientAddressus_zip', 'ClientAddressus_ClientAddressus_county']].dropna().drop_duplicates()
+client_data_reference = client_data.rename(columns={
+    'ClientAddressus_ClientAddressus_zip': 'zip_code',
+    'ClientAddressus_ClientAddressus_county': 'county',
+})
 
-We're also creating a Bivariate Morans I where we strictly cross reference Economic Instability 
+# merge county info into cleaned dataset
+df_merged = df_clean.merge(client_data_reference, on='zip_code', how='left')
 
-Interpretation of Morans I:
-- Positive values (near +1) → spatial clustering (similar ZIPs near each other)
-- Zero (≈ 0) → random spatial pattern
-- Negative (toward -1) → checkerboard pattern (highs near lows)
+# filter to only bexar ZIPs
+df_bexar = df_merged[df_merged['county'].str.lower() == 'bexar']
 
-A statistically significant Morans I (p < 0.05) suggests that 
-the variable is **not randomly distributed** across space.
+df_bexar['county'] = 'Bexar'
 
-Local Indicators of Spatial Association (LISA)
-While Morans I gives us a single summary for the entire area,
-LISA breaks that down **ZIP by ZIP**, identifying:
+# save it to a new CSV
+df_bexar.to_csv('Bexar_County_Cleaned_ZIP_Data.csv', index=False)
 
-- High-High (HH): high values surrounded by high → spatial hotspots
-- Low-Low (LL): low values surrounded by low → spatial cold spots
-- High-Low (HL) / Low-High (LH): spatial outliers
-
-We're running LISA for:
-- Callers per 1,000 residents
-- Poverty Rate, ALICE Rate, or combined
-
-The output **LISA Cluster Map** visualizes ZIPs with significant spatial patterns,
-helping us pinpoint where geographically targeted interventions may be needed.
-
-Example use:
-- A High-High ZIP might benefit from more 2-1-1 resources or partner support.
-- A Low-High ZIP (cold ZIP surrounded by need) might be underutilizing services.
 
 '''
+     The following code is map prep for the Moran's I test
+     (restricted to ZIPs listed in 'Bexar_County_Cleaned_ZIP_Data.csv')
+'''
+# load newly made csv
+df_bexar_cleaned = pd.read_csv('Bexar_County_Cleaned_ZIP_Data.csv')
+df_bexar_cleaned['zip_code'] = df_bexar_cleaned['zip_code'].astype(str).str.zfill(5)
+
+# load indicator data
+df_demo = pd.read_csv("211 Area Indicators_ZipZCTA.csv")
+df_demo['zip_code'] = df_demo['Zip_Name'].astype(str).str.zfill(5)
+
+# keep only ZIPs listed in bexar clean ZIP csv
+df_demo_filtered = df_demo[df_demo['zip_code'].isin(df_bexar_cleaned['zip_code'])].copy()
+
+df_demo_filtered = df_demo_filtered.rename(columns={
+    'Pct_Poverty_Households': 'poverty_rate',
+    'Pct_Below.ALICE_Households': 'alice_rate'
+})
+
+# ensuring format matches merge
+df_demo_filtered['County_Name'] = 'Bexar'
+
+# merge indicator columns into cleaned bexar
+columns_to_merge = ['zip_code', 'County_Name'] + [
+    col for col in df_demo.columns if col not in ['Zip_Name', 'GEO.display_label']  # or list explicitly
+]
+df_demo_filtered = df_demo_filtered[['zip_code', 'poverty_rate', 'alice_rate']]
+df_merged = df_bexar_cleaned.merge(df_demo_filtered, on='zip_code', how='left')
+
+df_merged.to_csv('Bexar_County_ZIP_Eco_Indicator_Data.csv', index=False)
+
+'''
+     This is the end of Morans I bexar county map prep
+'''
+
+
+'''
+Now that we have the cleaned Bexar County ZIP dataset, we're going to apply the same Morans I analysis as we did in the 211 ZIP Morans I Analysis script.
+This will allow us to visualize the spatial distribution of 211 callers in specifically Bexar County,
+
+                    REPLACE CSV's WITH: 'Bexar_County_ZIP_Eco_Indicator_Data.csv'
+
+                    THE FOLLOWING CODE WILL RUN MORANS I ANALYSIS ON BEXAR COUNTY ZIP DATA
+                    AND GENERATE VISUALS FOR POVERTY, ALICE, AND CALLER RATE
+'''
+
+# to open virtual environment: venv\Scripts\activate
 
 geojson_url = 'https://raw.githubusercontent.com/OpenDataDE/State-zip-code-geojson/master/tx_texas_zip_codes_geo.min.json'
 gdf = gpd.read_file(geojson_url)
 gdf['zip_code'] = gdf['ZCTA5CE10'].astype(str).str.zfill(5)
 
-df = pd.read_csv("New_211_Client_Cleaned.csv")
+df = pd.read_csv('Bexar_County_ZIP_Eco_Indicator_Data.csv')
 df['zip_code'] = df['zip_code'].astype(str).str.zfill(5)
 
-# Morans I: Callers per 1,000 & ZIP
+load a Texas counties shapefile that includes Bexar (if you have one)
+counties = gpd.read_file("path/to/tx_county_shapefile.shp")
+bexar_shape = counties[counties['NAME'].str.lower() == 'bexar']
+
+# 2. Reproject if needed
+bexar_shape = bexar_shape.to_crs(gdf.crs)
+
+# 3. Spatial clip
+gdf = gpd.overlay(gdf, bexar_shape, how='intersection')
+
+
+# filter GDF to only bexar
 gdf = gdf[gdf['zip_code'].isin(df['zip_code'])]
-gdf = gdf.merge(df[['zip_code', 'callers_per_1000']], on='zip_code')
+
+# merge
+gdf = gdf.merge(df, on='zip_code', how='left')
+
+# pov alice sum
+gdf['poverty_alice_sum'] = gdf['poverty_rate'] + gdf['alice_rate']
+
 w = Queen.from_dataframe(gdf)
 w.transform = 'r'
-y = gdf['callers_per_1000'].fillna(0).values
-moran = Moran(y, w)
-print(f"Moran's I: {moran.I:.4f}")
-print(f"P-value (permutation): {moran.p_sim:.4f}")
 
-# prep for economic instability Morans I
-# load economic indicator data (poverty + ALICE)
-df_demo = pd.read_csv("211 Area Indicators_ZipZCTA.csv")
-df_demo['zip_code'] = df_demo['GEO.display_label'].astype(str).str.extract(r'(\d{5})')
+# run Morans I
+# callers per 1,000
+moran_callers = Moran(gdf['callers_per_1000'].fillna(0).values, w)
+print(f"[Callers/1000] Moran's I: {moran_callers.I:.4f}, p = {moran_callers.p_sim:.4f}")
 
-# select and rename relevant columns
-df_demo = df_demo[['zip_code', 'Pct_Poverty_Households', 'Pct_Below.ALICE_Households']]
-df_demo.columns = ['zip_code', 'poverty_rate', 'alice_rate']
-
-# merge into GDF
-gdf = gdf.merge(df_demo, on='zip_code', how='left')
-
-gdf['poverty_alice_avg'] = (gdf['poverty_rate'] + gdf['alice_rate'])
-
-# poverty
+# poverty Rate
 moran_pov = Moran(gdf['poverty_rate'].fillna(0).values, w)
 print(f"[Poverty] Moran's I: {moran_pov.I:.4f}, p = {moran_pov.p_sim:.4f}")
 
-# ALICE
+# ALICE Rate
 moran_alice = Moran(gdf['alice_rate'].fillna(0).values, w)
 print(f"[ALICE] Moran's I: {moran_alice.I:.4f}, p = {moran_alice.p_sim:.4f}")
 
-# combo
-moran_combo = Moran(gdf['poverty_alice_avg'].fillna(0).values, w)
+# sum
+moran_combo = Moran(gdf['poverty_alice_sum'].fillna(0).values, w)
 print(f"[Poverty+ALICE] Moran's I: {moran_combo.I:.4f}, p = {moran_combo.p_sim:.4f}")
 
-
 '''
-RUNNING LISA FOR MORANS I ECONOMIC INSTABILITY
+RUNNING LISA FOR MORANS I ECONOMIC INSTABILITY - COMMENT OUT FOR TIME PURPOSES ONCE VISUALS ARE MADE
 '''
 '''
 # LISA for callers per 1,000
@@ -154,10 +195,10 @@ gdf_plot = gdf[gdf['biv_poverty_sig'] == True]
 import matplotlib.patches as mpatches
 
 quad_colors_POV = {
-    1: '#FFD100',   # HH – Yellow
-    2: '#0A2F5A',   # LH – Navy
-    3: '#93BAE9',   # LL – Light Blue
-    4: '#D22630'    # HL – Red
+    1: '#FFD100',
+    2: '#0A2F5A',
+    3: '#93BAE9',
+    4: '#D22630'
 }
 
 quad_labels_POV = {
@@ -336,7 +377,6 @@ moran_cols_combo = [
 
 gdf = gdf.reset_index(drop=True)
 
-gdf[moran_cols_pov].to_csv('Bivariate_Poverty_vs_CallerRate_LISA.csv', index=False)
-gdf[moran_cols_alice].to_csv('Bivariate_ALICE_vs_CallerRate_LISA.csv', index=False)
-gdf[moran_cols_combo].to_csv('Bivariate_PovertyALICE_vs_CallerRate_LISA.csv', index=False)
-
+gdf[moran_cols_pov].to_csv('Bexar_Bivariate_Poverty_LISA.csv', index=False)
+gdf[moran_cols_alice].to_csv('Bexar_Bivariate_ALICE_LISA.csv', index=False)
+gdf[moran_cols_combo].to_csv('Bexar_Bivariate_Sum_LISA.csv', index=False)
