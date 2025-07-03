@@ -45,6 +45,10 @@ We answer this through analysis of:
 While raw .csv files and generated graphs are not publicly visible in this repository due to an NDA with United Way of San Antonio & Bexar County, the structure below reflects all scripts, file paths, and outputs used internally.**
 
 UNITED-WAY-BEXAR-COUNTY/
+## 📁 Project Structure
+
+```
+UNITED-WAY-BEXAR-COUNTY/
 ├── README.md
 ├── .gitignore
 ├── venv/
@@ -115,6 +119,8 @@ UNITED-WAY-BEXAR-COUNTY/
 ├── New_211_Client_Cleaned.csv
 ├── Poverty Cleanup.py
 ├── Top_ZIPs_Economic_Instability.csv
+```
+
 
 
 ## 🚫 Data Access & NDA Note
