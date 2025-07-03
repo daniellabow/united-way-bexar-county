@@ -336,7 +336,7 @@ moran_cols_sum = [
 
 gdf = gdf.reset_index(drop=True)
 
-gdf[moran_cols_pov].to_csv('Bivariate_Poverty_vs_CallerRate_LISA.csv', index=False)
-gdf[moran_cols_alice].to_csv('Bivariate_ALICE_vs_CallerRate_LISA.csv', index=False)
-gdf[moran_cols_sum].to_csv('Bivariate_PovertyALICE_vs_CallerRate_LISA.csv', index=False)
+gdf[moran_cols_pov].to_csv('bivariate_data/Bivariate_Poverty_vs_CallerRate_LISA.csv', index=False)
+gdf[moran_cols_alice].to_csv('bivariate_data/Bivariate_ALICE_vs_CallerRate_LISA.csv', index=False)
+gdf[moran_cols_sum].to_csv('bivariate_data/Bivariate_PovertyALICE_vs_CallerRate_LISA.csv', index=False)
 
