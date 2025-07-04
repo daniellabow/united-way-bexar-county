@@ -44,7 +44,6 @@ We answer this through analysis of:
 > **Note: This is the true, full project directory used for analysis and visualization during the UTSA Community Innovation Scholars Program.
 While raw .csv files and generated graphs are not publicly visible in this repository due to an NDA with United Way of San Antonio & Bexar County, the structure below reflects all scripts, file paths, and outputs used internally.**
 
-UNITED-WAY-BEXAR-COUNTY/
 ## 📁 Project Structure
 
 ```
