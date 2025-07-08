@@ -19,60 +19,42 @@ This is useful for further analysis or visualization focused on Bexar County.
 df_clean = pd.read_csv('New_211_Client_Cleaned.csv')
 df_clean['zip_code'] = df_clean['zip_code'].astype(str).str.zfill(5)
 
-# load the original dataset that w county info
-df_original = pd.read_csv('211 Call Data_Client Tab_All Years.csv')
-df_original['ClientAddressus_ClientAddressus_zip'] = df_original['ClientAddressus_ClientAddressus_zip'].astype(str).str.zfill(5)
+# area indicators with county + economic data
+df_demo = pd.read_csv("211 Area Indicators_ZipZCTA.csv")
+df_demo['zip_code'] = df_demo['Zip_Name'].astype(str).str.zfill(5)
 
-# create a ZIP -> county mapping from og dataset
-client_data = df_original[['ClientAddressus_ClientAddressus_zip', 'ClientAddressus_ClientAddressus_county']].dropna().drop_duplicates()
-client_data_reference = client_data.rename(columns={
-    'ClientAddressus_ClientAddressus_zip': 'zip_code',
-    'ClientAddressus_ClientAddressus_county': 'county',
-})
+# keep ZIP + county for filtering
+df_county_ref = df_demo[['zip_code', 'County_Name']].dropna().drop_duplicates()
+df_county_ref = df_county_ref.rename(columns={'County_Name': 'county'})
 
-# merge county info into cleaned dataset
-df_merged = df_clean.merge(client_data_reference, on='zip_code', how='left')
+# merge county info into client data
+df_merged = df_clean.merge(df_county_ref, on='zip_code', how='left')
 
-# filter to only bexar ZIPs
-df_bexar = df_merged[df_merged['county'].str.lower() == 'bexar']
-
+# filter only Bexar County
+df_bexar = df_merged[df_merged['county'].str.lower() == 'bexar'].copy()
 df_bexar['county'] = 'Bexar'
 
-# save it to a new CSV
+# save Bexar-only data
 df_bexar.to_csv('bexar_specific/Bexar_County_Cleaned_ZIP_Data.csv', index=False)
-
 
 '''
      The following code is map prep for the Moran's I test
      (restricted to ZIPs listed in 'Bexar_County_Cleaned_ZIP_Data.csv')
 '''
-# load newly made csv
-df_bexar_cleaned = pd.read_csv('bexar_specific/Bexar_County_Cleaned_ZIP_Data.csv')
-df_bexar_cleaned['zip_code'] = df_bexar_cleaned['zip_code'].astype(str).str.zfill(5)
 
-# load indicator data
-df_demo = pd.read_csv("211 Area Indicators_ZipZCTA.csv")
-df_demo['zip_code'] = df_demo['Zip_Name'].astype(str).str.zfill(5)
-
-# keep only ZIPs listed in bexar clean ZIP csv
-df_demo_filtered = df_demo[df_demo['zip_code'].isin(df_bexar_cleaned['zip_code'])].copy()
-
-df_demo_filtered = df_demo_filtered.rename(columns={
+# prep economic indicator data
+df_econ = df_demo[['zip_code', 'Pct_Poverty_Households', 'Pct_Below.ALICE_Households']].copy()
+df_econ = df_econ.rename(columns={
     'Pct_Poverty_Households': 'poverty_rate',
     'Pct_Below.ALICE_Households': 'alice_rate'
 })
 
-# ensuring format matches merge
-df_demo_filtered['County_Name'] = 'Bexar'
+# merge indicators into Bexar-only dataset
+df_final = df_bexar.merge(df_econ, on='zip_code', how='left')
 
-# merge indicator columns into cleaned bexar
-columns_to_merge = ['zip_code', 'County_Name'] + [
-    col for col in df_demo.columns if col not in ['Zip_Name', 'GEO.display_label']  # or list explicitly
-]
-df_demo_filtered = df_demo_filtered[['zip_code', 'poverty_rate', 'alice_rate']]
-df_merged = df_bexar_cleaned.merge(df_demo_filtered, on='zip_code', how='left')
+# save final output for spatial analysis
+df_final.to_csv('bexar_specific/Bexar_County_ZIP_Eco_Indicator_Data.csv', index=False)
 
-df_merged.to_csv('bexar_specific/Bexar_County_ZIP_Eco_Indicator_Data.csv', index=False)
 
 '''
      This is the end of Morans I bexar county map prep
@@ -91,28 +73,18 @@ This will allow us to visualize the spatial distribution of 211 callers in speci
 
 # to open virtual environment: venv\Scripts\activate
 
+# load your cleaned Bexar dataset
+df = pd.read_csv('bexar_specific/Bexar_County_ZIP_Eco_Indicator_Data.csv')
+df['zip_code'] = df['zip_code'].astype(str).str.zfill(5)
+
+# load TX ZIP shapefile
 geojson_url = 'https://raw.githubusercontent.com/OpenDataDE/State-zip-code-geojson/master/tx_texas_zip_codes_geo.min.json'
 gdf = gpd.read_file(geojson_url)
 gdf['zip_code'] = gdf['ZCTA5CE10'].astype(str).str.zfill(5)
 
-df = pd.read_csv('bexar_specific/Bexar_County_ZIP_Eco_Indicator_Data.csv')
-df['zip_code'] = df['zip_code'].astype(str).str.zfill(5)
-'''
-# load a texas counties shapefile that has bexar
-counties = gpd.read_file("path/to/tx_county_shapefile.shp")
-bexar_shape = counties[counties['NAME'].str.lower() == 'bexar']
-
-# reshape 
-bexar_shape = bexar_shape.to_crs(gdf.crs)
-
-# spatial clip
-gdf = gpd.overlay(gdf, bexar_shape, how='intersection')
-
-# filter GDF to only bexar
-gdf = gdf[gdf['zip_code'].isin(df['zip_code'])]
-'''
-# merge
+# merge and FILTER to Bexar ZIPs
 gdf = gdf.merge(df, on='zip_code', how='left')
+gdf = gdf[gdf['zip_code'].isin(df['zip_code'])]  # only Bexar ZIPs with data
 
 # pov alice sum
 gdf['poverty_alice_sum'] = gdf['poverty_rate'] + gdf['alice_rate']

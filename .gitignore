@@ -14,7 +14,10 @@
 
 # added code to exclude images in graphs folder in which data visualization is shown
 /graphs/
+/bexar_specific/visuals/
 
+# ignore tableau
+*.twbr
 
 # ignore Python compiled files
 __pycache__/
