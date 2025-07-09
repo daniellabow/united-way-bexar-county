@@ -104,7 +104,6 @@ print(f"Unique callers with valid ZIPs (before removing bad call types): {total_
 print(f"Callers remaining after removing 'Phantom' and 'Wrong #' call types: {total_final_callers}")
 print(f"Callers excluded due to having only invalid call types: {total_valid_zip_unique_callers - total_final_callers}")
 
-
 # filter out 'Phantom' and 'Wrong #' calls
 bad_call_types = ['Phantom', 'Wrong #']
 before_filtering = df_interaction.shape[0]
@@ -115,6 +114,7 @@ after_filtering = df_interaction.shape[0]
 print(f"\nCalls before filtering: {before_filtering}")
 print(f"Calls after filtering: {after_filtering}")
 print(f"Bad calls removed: {before_filtering - after_filtering}")
+
 
 '''
 Finally tying everything together into one new csv
