@@ -72,17 +72,19 @@ print(f"P-value (permutation): {moran.p_sim:.4f}")
 
 # prep for economic instability Morans I
 # load economic indicator data (poverty + ALICE)
+# load economic indicator data (poverty + ALICE)
 df_demo = pd.read_csv("211 Area Indicators_ZipZCTA.csv")
 df_demo['zip_code'] = df_demo['GEO.display_label'].astype(str).str.extract(r'(\d{5})')
 
 # select and rename relevant columns
+# rename columns to match intended usage
 df_demo = df_demo[['zip_code', 'Pct_Poverty_Households', 'Pct_Below.ALICE_Households']]
-df_demo.columns = ['zip_code', 'poverty_rate', 'alice_rate']
+df_demo.columns = ['zip_code', 'poverty_rate', 'poverty_alice_sum']
 
 # merge into GDF
 gdf = gdf.merge(df_demo, on='zip_code', how='left')
 
-gdf['poverty_alice_sum'] = (gdf['poverty_rate'] + gdf['alice_rate'])
+gdf['alice_rate'] = gdf['poverty_alice_sum'] - gdf['poverty_rate']
 
 # poverty
 moran_pov = Moran(gdf['poverty_rate'].fillna(0).values, w)
@@ -257,8 +259,6 @@ plt.show()
 
 w = Queen.from_dataframe(gdf)
 w.transform = 'r'
-
-gdf['poverty_alice_sum'] = gdf['poverty_rate'] + gdf['alice_rate']
 
 print(gdf[['poverty_alice_sum', 'callers_per_1000']].head())
 print(gdf[['poverty_alice_sum', 'callers_per_1000']].isna().sum())
