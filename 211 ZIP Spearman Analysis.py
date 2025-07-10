@@ -56,6 +56,12 @@ df_no_78205['poverty_rate_percent'] = df_no_78205['poverty_rate'] * 100
 df_no_78205['alice_rate_percent'] = df_no_78205['alice_rate'] * 100
 df_no_78205['poverty_alice_sum_percent'] = df_no_78205['poverty_alice_sum'] * 100
 
+# print Spearman correlation results
+print("\n[Spearman Correlation Results]")
+print(f"Poverty Rate vs Callers per 1,000 → ρ = {rho_poverty:.3f}, p = {pval_poverty:.4f}")
+print(f"ALICE Rate vs Callers per 1,000 → ρ = {rho_alice:.3f}, p = {pval_alice:.4f}")
+print(f"Below Alice Rate (Combined Economic Instability) vs Callers per 1,000 → ρ = {rho_combo:.3f}, p = {pval_combo:.4f}")
+
 
 '''
 VISUALIZATION CODE

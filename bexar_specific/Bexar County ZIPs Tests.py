@@ -12,49 +12,51 @@ information from the original dataset. It filters the data to only include Bexar
 The resulting dataset contains caller information along with the corresponding county, specifically for Bexar County ZIP codes.
 This is useful for further analysis or visualization focused on Bexar County.
 '''
+import pandas as pd
+from scipy.stats import spearmanr
 
-# to open virtual environment: venv\Scripts\activate
-
-# load your cleaned dataset with ZIP codes
 df_clean = pd.read_csv('New_211_Client_Cleaned.csv')
 df_clean['zip_code'] = df_clean['zip_code'].astype(str).str.zfill(5)
 
-# area indicators with county + economic data
 df_demo = pd.read_csv("211 Area Indicators_ZipZCTA.csv")
 df_demo['zip_code'] = df_demo['Zip_Name'].astype(str).str.zfill(5)
 
-# keep ZIP + county for filtering
 df_county_ref = df_demo[['zip_code', 'County_Name']].dropna().drop_duplicates()
 df_county_ref = df_county_ref.rename(columns={'County_Name': 'county'})
 
-# merge county info into client data
 df_merged = df_clean.merge(df_county_ref, on='zip_code', how='left')
-
-# filter only Bexar County
 df_bexar = df_merged[df_merged['county'].str.lower() == 'bexar'].copy()
 df_bexar['county'] = 'Bexar'
 
-# save Bexar-only data
-df_bexar.to_csv('bexar_specific/Bexar_County_Cleaned_ZIP_Data.csv', index=False)
-
-'''
-     The following code is map prep for the Moran's I test
-     (restricted to ZIPs listed in 'Bexar_County_Cleaned_ZIP_Data.csv')
-'''
-
-# prep economic indicator data
 df_econ = df_demo[['zip_code', 'Pct_Poverty_Households', 'Pct_Below.ALICE_Households']].copy()
-df_econ = df_econ.rename(columns={
-    'Pct_Poverty_Households': 'poverty_rate',
-    'Pct_Below.ALICE_Households': 'alice_rate'
-})
+df_econ.columns = ['zip_code', 'poverty_rate', 'poverty_alice_sum']
 
-# merge indicators into Bexar-only dataset
+df_econ['alice_rate'] = df_econ['poverty_alice_sum'] - df_econ['poverty_rate']
+
 df_final = df_bexar.merge(df_econ, on='zip_code', how='left')
 
-# save final output for spatial analysis
-df_final.to_csv('bexar_specific/Bexar_County_ZIP_Eco_Indicator_Data.csv', index=False)
+df_final = df_final.dropna(subset=['callers_per_1000', 'poverty_rate', 'alice_rate', 'poverty_alice_sum'])
 
+rho_poverty, pval_poverty = spearmanr(df_final['callers_per_1000'], df_final['poverty_rate'])
+rho_alice, pval_alice = spearmanr(df_final['callers_per_1000'], df_final['alice_rate'])
+rho_combo, pval_combo = spearmanr(df_final['callers_per_1000'], df_final['poverty_alice_sum'])
+
+print("\n[Below ALICE Stats - Bexar County]")
+print(df_final['poverty_alice_sum'].describe())
+print(f"\nMax combined poverty + ALICE rate: {df_final['poverty_alice_sum'].max() * 100:.2f}%")
+
+print("\n[Spearman Correlation Results - Bexar County]")
+print(f"Poverty Rate vs Callers per 1,000 → ρ = {rho_poverty:.3f}, p = {pval_poverty:.4f}")
+print(f"ALICE Rate vs Callers per 1,000 → ρ = {rho_alice:.3f}, p = {pval_alice:.4f}")
+print(f"Combined Poverty + ALICE vs Callers per 1,000 → ρ = {rho_combo:.3f}, p = {pval_combo:.4f}")
+
+df_no_78205 = df_final[df_final['zip_code'] != '78205'].copy()
+
+df_no_78205['poverty_rate_percent'] = df_no_78205['poverty_rate'] * 100
+df_no_78205['alice_rate_percent'] = df_no_78205['alice_rate'] * 100
+df_no_78205['poverty_alice_sum_percent'] = df_no_78205['poverty_alice_sum'] * 100
+
+df_final.to_csv('bexar_specific/Bexar_County_ZIP_Eco_Indicator_Data.csv', index=False)
 
 '''
      This is the end of Morans I bexar county map prep
@@ -85,9 +87,6 @@ gdf['zip_code'] = gdf['ZCTA5CE10'].astype(str).str.zfill(5)
 # merge and FILTER to Bexar ZIPs
 gdf = gdf.merge(df, on='zip_code', how='left')
 gdf = gdf[gdf['zip_code'].isin(df['zip_code'])]  # only Bexar ZIPs with data
-
-# pov alice sum
-gdf['poverty_alice_sum'] = gdf['poverty_rate'] + gdf['alice_rate']
 
 w = Queen.from_dataframe(gdf)
 w.transform = 'r'
@@ -137,7 +136,7 @@ plt.show()
 # LISA for poverty + ALICE (sum)
 lisa_combo = Moran_Local(gdf['poverty_alice_sum'].fillna(0).values, w)
 fig, ax = lisa_cluster(lisa_combo, gdf, p=0.05)
-plt.title("LISA Cluster Map: Economic Insability")
+plt.title("LISA Cluster Map: Below Alice")
 plt.tight_layout()
 plt.show()
 
@@ -270,8 +269,6 @@ plt.show()
 w = Queen.from_dataframe(gdf)
 w.transform = 'r'
 
-gdf['poverty_alice_sum'] = gdf['poverty_rate'] + gdf['alice_rate']
-
 print(gdf[['poverty_alice_sum', 'callers_per_1000']].head())
 print(gdf[['poverty_alice_sum', 'callers_per_1000']].isna().sum())
 
@@ -317,7 +314,7 @@ fig, ax = plt.subplots(figsize=(11, 11))
 gdf.plot(color=gdf['biv_comb_final_color'], linewidth=0.2, edgecolor='white', ax=ax)
 
 ax.legend(handles=legend_elements_COMBO, loc='upper right', title='Bivariate LISA Cluster')
-ax.set_title("Bivariate Spatial Clustering:\nEconomic Instability vs Callers per 1,000 Residents", fontsize=14)
+ax.set_title("Bivariate Spatial Clustering:\nBelow Alice vs Callers per 1,000 Residents", fontsize=14)
 ax.axis('off')
 
 plt.tight_layout()
