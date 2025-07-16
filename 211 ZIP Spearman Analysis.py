@@ -391,7 +391,7 @@ for _, row in df_no_78205.iterrows():
     )
 
 # labels and axis formatting
-plt.title('Spearman: Callers per 1,000 vs. Below Alice', fontsize=16)
+plt.title('Spearman: Callers per 1,000 vs. Below ALICE', fontsize=16)
 plt.xlabel('Below Alice Rate (%)', fontsize=12)
 plt.gca().xaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x:.0f}%'))
 plt.ylabel('Callers per 1,000 Residents', fontsize=12)

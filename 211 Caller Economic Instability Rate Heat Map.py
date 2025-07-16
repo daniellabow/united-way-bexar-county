@@ -285,7 +285,7 @@ full_legend = HPacker(
     ],
     align="center", pad=0, sep=50
 )
-
+'''
 anchored_box = AnchoredOffsetbox(
     loc='upper left',
     child=full_legend,
@@ -295,7 +295,8 @@ anchored_box = AnchoredOffsetbox(
     bbox_transform=ax.transAxes
 )
 ax.add_artist(anchored_box)
-ax.set_title("ZIP Map by Caller Rate & Poverty Quartile Bivariate Category")
+'''
+ax.set_title("Caller Rate vs Poverty Rate by ZIP Code")
 ax.axis('off')
 plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05)
 plt.show()
@@ -381,7 +382,7 @@ full_legend_alice = HPacker(
 # plot
 fig, ax = plt.subplots(figsize=(11, 11))  # move this up before add_artist
 gdf.plot(color=gdf['bivariate_color_alice'].fillna('#E0E0E0'), edgecolor='white', linewidth=0.4, ax=ax)
-
+'''
 # then add the legend to this ax
 anchored_box_alice = AnchoredOffsetbox(
     loc='upper left',
@@ -392,8 +393,8 @@ anchored_box_alice = AnchoredOffsetbox(
     bbox_transform=ax.transAxes
 )
 ax.add_artist(anchored_box_alice)
-
-ax.set_title("ZIP Map by Caller Rate & ALICE Quartile Bivariate Category")
+'''
+ax.set_title("Caller Rate vs ALICE Rate by ZIP Code")
 ax.axis('off')
 plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05)
 plt.show()
@@ -475,7 +476,7 @@ full_legend_sum = HPacker(
 # plot
 fig, ax = plt.subplots(figsize=(11, 11))  # move this up before add_artist
 gdf.plot(color=gdf['bivariate_color_sum'].fillna('#E0E0E0'), edgecolor='white', linewidth=0.4, ax=ax)
-
+'''
 # then add the legend to this ax
 anchored_box_sum = AnchoredOffsetbox(
     loc='upper left',
@@ -486,7 +487,8 @@ anchored_box_sum = AnchoredOffsetbox(
     bbox_transform=ax.transAxes
 )
 ax.add_artist(anchored_box_sum)
-ax.set_title("ZIP Map by Caller Rate & Below ALICE Rate Bivariate Category")
+'''
+ax.set_title("Caller Rate vs Below ALICE Rate by ZIP Code")
 ax.axis('off')
 plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05)
 plt.show()

@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from esda.moran import Moran_Local
 from splot.esda import lisa_cluster
 from libpysal.weights import Queen
+import numpy as np
+np.random.seed(42)
 
 # to open virtual environment: venv\Scripts\activate
 
@@ -142,7 +144,7 @@ w.transform = 'r'
 
 from esda.moran import Moran_Local_BV
 
-biv_poverty = Moran_Local_BV(gdf['poverty_rate'], gdf['callers_per_1000'], w)
+biv_poverty = Moran_Local_BV(gdf['poverty_rate'], gdf['callers_per_1000'], w, permutations=999, seed=42)
 
 # add results to GDF
 gdf['biv_poverty_I'] = biv_poverty.Is
@@ -156,10 +158,10 @@ gdf_plot = gdf[gdf['biv_poverty_sig'] == True]
 import matplotlib.patches as mpatches
 
 quad_colors_POV = {
-    1: '#FFD100',   # HH – Yellow
-    2: '#0A2F5A',   # LH – Navy
-    3: '#93BAE9',   # LL – Light Blue
-    4: '#D22630'    # HL – Red
+    1: '#CCCCCC',
+    2: '#0A2F5A',
+    3: '#CCCCCC',
+    4: '#D22630'
 }
 
 quad_labels_POV = {
@@ -170,11 +172,11 @@ quad_labels_POV = {
 }
 
 legend_elements_POV = [
-    mpatches.Patch(color='#FFD100', label='HH: High Poverty–High Calls = Well Aligned'),
+    mpatches.Patch(color='#CCCCCC', label='HH: High Poverty–High Calls = Well Aligned'),
     mpatches.Patch(color='#D22630', label='HL: High Poverty–Low Calls = Service Gap'),
     mpatches.Patch(color='#0A2F5A', label='LH: Low Poverty–High Calls = Misaligned'),
-    mpatches.Patch(color='#93BAE9', label='LL: Low Poverty–Low Calls = Well Aligned'),
-    mpatches.Patch(color='#E0E0E0', label='Not Statistically Significant')
+    mpatches.Patch(color='#CCCCCC', label='LL: Low Poverty–Low Calls = Well Aligned'),
+    mpatches.Patch(color="#FFFFFF", label='Not Statistically Significant')
 ]
 
 # create a new column with quadrant label
@@ -183,13 +185,13 @@ gdf['biv_poverty_color'] = gdf['biv_poverty_quadrant'].map(quad_colors_POV)
 
 # apply color only if significant, else light gray
 gdf['biv_poverty_final_color'] = gdf.apply(
-    lambda row: row['biv_poverty_color'] if row['biv_poverty_sig'] else '#E0E0E0',
+    lambda row: row['biv_poverty_color'] if row['biv_poverty_sig'] else "#FFFFFF",
     axis=1
 )
 
 # plot
 fig, ax = plt.subplots(figsize=(11, 11))
-gdf.plot(color=gdf['biv_poverty_final_color'], linewidth=0.2, edgecolor='white', ax=ax)
+gdf.plot(color=gdf['biv_poverty_final_color'], linewidth=0.2, edgecolor='black', ax=ax)
 
 ax.legend(
     handles=legend_elements_POV,
@@ -198,7 +200,7 @@ ax.legend(
     title='Bivariate LISA Cluster'
 )
 
-ax.set_title("Bivariate Spatial Clustering:\nPoverty Rate vs Callers per 1,000 Residents", fontsize=14)
+ax.set_title("Bivariate Local Moran's I:\nPoverty Rate vs Callers per 1,000 Residents", fontsize=14)
 ax.axis('off')
 
 plt.tight_layout()
@@ -209,7 +211,7 @@ plt.show()
 w = Queen.from_dataframe(gdf)
 w.transform = 'r'
 
-biv_alice = Moran_Local_BV(gdf['alice_rate'], gdf['callers_per_1000'], w)
+biv_alice = Moran_Local_BV(gdf['alice_rate'], gdf['callers_per_1000'], w, permutations=999, seed=42)
 
 gdf['biv_alice_I'] = biv_alice.Is
 gdf['biv_alice_p'] = biv_alice.p_sim
@@ -217,9 +219,9 @@ gdf['biv_alice_q'] = biv_alice.q
 gdf['biv_alice_sig'] = biv_alice.p_sim < 0.05
 
 quad_colors_ALICE = {
-    1: '#FFD100',
+    1: '#CCCCCC',
     2: '#0A2F5A',
-    3: '#93BAE9',
+    3: '#CCCCCC',
     4: '#D22630'
 }
 
@@ -231,25 +233,25 @@ quad_labels_ALICE = {
 }
 
 legend_elements_ALICE = [
-    mpatches.Patch(color='#FFD100', label='HH: High Poverty–High Calls = Well Aligned'),
+    mpatches.Patch(color='#CCCCCC', label='HH: High Poverty–High Calls = Well Aligned'),
     mpatches.Patch(color='#D22630', label='HL: High Poverty–Low Calls = Service Gap'),
     mpatches.Patch(color='#0A2F5A', label='LH: Low Poverty–High Calls = Misaligned'),
-    mpatches.Patch(color='#93BAE9', label='LL: Low Poverty–Low Calls = Well Aligned'),
-    mpatches.Patch(color='#E0E0E0', label='Not Statistically Significant')
+    mpatches.Patch(color='#CCCCCC', label='LL: Low Poverty–Low Calls = Well Aligned'),
+    mpatches.Patch(color="#FFFFFF", label='Not Statistically Significant')
 ]
 
 gdf['biv_alice_label'] = gdf['biv_alice_q'].map(quad_labels_ALICE)
 gdf['biv_alice_color'] = gdf['biv_alice_q'].map(quad_colors_ALICE)
 
 gdf['biv_alice_final_color'] = gdf.apply(
-    lambda row: row['biv_alice_color'] if row['biv_alice_sig'] else '#E0E0E0',
+    lambda row: row['biv_alice_color'] if row['biv_alice_sig'] else "#FFFFFF",
     axis=1
 )
 fig, ax = plt.subplots(figsize=(11, 11))
-gdf.plot(color=gdf['biv_alice_final_color'], linewidth=0.2, edgecolor='white', ax=ax)
+gdf.plot(color=gdf['biv_alice_final_color'], linewidth=0.2, edgecolor='black', ax=ax)
 
 ax.legend(handles=legend_elements_ALICE, loc='upper right', title='Bivariate LISA Cluster')
-ax.set_title("Bivariate Spatial Clustering:\nALICE Rate vs Callers per 1,000 Residents", fontsize=14)
+ax.set_title("Bivariate Local Moran's I:\nALICE Rate vs Callers per 1,000 Residents", fontsize=14)
 ax.axis('off')
 
 plt.tight_layout()
@@ -263,7 +265,7 @@ w.transform = 'r'
 print(gdf[['poverty_alice_sum', 'callers_per_1000']].head())
 print(gdf[['poverty_alice_sum', 'callers_per_1000']].isna().sum())
 
-biv_combined = Moran_Local_BV(gdf['poverty_alice_sum'], gdf['callers_per_1000'], w)
+biv_combined = Moran_Local_BV(gdf['poverty_alice_sum'], gdf['callers_per_1000'], w, permutations=999, seed=42)
 
 gdf['biv_comb_I'] = biv_combined.Is
 gdf['biv_comb_p'] = biv_combined.p_sim
@@ -271,9 +273,9 @@ gdf['biv_comb_q'] = biv_combined.q
 gdf['biv_comb_sig'] = biv_combined.p_sim < 0.05
 
 quad_colors_COMBO = {
-    1: '#FFD100',
+    1: '#CCCCCC',
     2: '#0A2F5A',
-    3: '#93BAE9',
+    3: '#CCCCCC',
     4: '#D22630'
 }
 
@@ -285,11 +287,11 @@ quad_labels_COMBO = {
 }
 
 legend_elements_COMBO = [
-    mpatches.Patch(color='#FFD100', label='HH: High Poverty–High Calls = Well Aligned'),
+    mpatches.Patch(color='#CCCCCC', label='HH: High Poverty–High Calls = Well Aligned'),
     mpatches.Patch(color='#D22630', label='HL: High Poverty–Low Calls = Service Gap'),
     mpatches.Patch(color='#0A2F5A', label='LH: Low Poverty–High Calls = Misaligned'),
-    mpatches.Patch(color='#93BAE9', label='LL: Low Poverty–Low Calls = Well Aligned'),
-    mpatches.Patch(color='#E0E0E0', label='Not Statistically Significant')
+    mpatches.Patch(color='#CCCCCC', label='LL: Low Poverty–Low Calls = Well Aligned'),
+    mpatches.Patch(color="#FFFFFF", label='Not Statistically Significant')
 ]
 
 
@@ -297,15 +299,15 @@ gdf['biv_comb_label'] = gdf['biv_comb_q'].map(quad_labels_COMBO)
 gdf['biv_comb_color'] = gdf['biv_comb_q'].map(quad_colors_COMBO)
 
 gdf['biv_comb_final_color'] = gdf.apply(
-    lambda row: row['biv_comb_color'] if row['biv_comb_sig'] else '#E0E0E0',
+    lambda row: row['biv_comb_color'] if row['biv_comb_sig'] else "#FFFFFF",
     axis=1
 )
 
 fig, ax = plt.subplots(figsize=(11, 11))
-gdf.plot(color=gdf['biv_comb_final_color'], linewidth=0.2, edgecolor='white', ax=ax)
+gdf.plot(color=gdf['biv_comb_final_color'], linewidth=0.2, edgecolor='black', ax=ax)
 
 ax.legend(handles=legend_elements_COMBO, loc='upper right', title='Bivariate LISA Cluster')
-ax.set_title("Bivariate Spatial Clustering:\nEconomic Instability vs Callers per 1,000 Residents", fontsize=14)
+ax.set_title("Bivariate Local Moran's I:\nBelow ALICE vs Callers per 1,000 Residents", fontsize=14)
 ax.axis('off')
 
 plt.tight_layout()
@@ -339,4 +341,54 @@ gdf = gdf.reset_index(drop=True)
 gdf[moran_cols_pov].to_csv('bivariate_data/Bivariate_Poverty_vs_CallerRate_LISA.csv', index=False)
 gdf[moran_cols_alice].to_csv('bivariate_data/Bivariate_ALICE_vs_CallerRate_LISA.csv', index=False)
 gdf[moran_cols_sum].to_csv('bivariate_data/Bivariate_PovertyALICE_vs_CallerRate_LISA.csv', index=False)
+# merge total_callers from df into gdf before Moran filtering
+gdf = gdf.merge(df[['zip_code', 'total_callers']], on='zip_code', how='left')
+# poverty-based outliers (quadrants 2 and 4)
+poverty_outliers = gdf[
+    (gdf['biv_poverty_sig']) &
+    (gdf['biv_poverty_quadrant'].isin([2, 4]))
+]
 
+poverty_out_table = poverty_outliers[[
+    'zip_code',
+    'callers_per_1000',
+    'poverty_rate',
+    'poverty_alice_sum',
+    'total_callers',
+    'biv_poverty_I',
+    'biv_poverty_p'
+]].copy()
+
+# rename columns for clarity
+poverty_out_table = poverty_out_table.rename(columns={
+    'poverty_alice_sum': 'below_alice_rate',
+    'biv_poverty_I': 'moran_I',
+    'biv_poverty_p': 'p_value'
+})
+
+# export to csv
+poverty_out_table.to_csv("Outlier_Poverty_Table.csv", index=False)
+
+# combined poverty + ALICE outliers (quadrants 2 and 4)
+combo_outliers = gdf[
+    (gdf['biv_comb_sig']) &
+    (gdf['biv_comb_q'].isin([2, 4]))
+]
+
+combo_out_table = combo_outliers[[
+    'zip_code',
+    'callers_per_1000',
+    'poverty_rate',
+    'poverty_alice_sum',
+    'total_callers',
+    'biv_comb_I',
+    'biv_comb_p'
+]].copy()
+
+combo_out_table = combo_out_table.rename(columns={
+    'poverty_alice_sum': 'below_alice_rate',
+    'biv_comb_I': 'moran_I',
+    'biv_comb_p': 'p_value'
+})
+
+combo_out_table.to_csv("Outlier_Below_ALICE_Table.csv", index=False)
