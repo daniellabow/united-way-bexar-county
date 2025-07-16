@@ -24,7 +24,7 @@ w = Queen.from_dataframe(gdf)
 w.transform = 'r'
 
 # LISA on poverty
-lisa_poverty = Moran_Local(gdf['poverty_rate'].values, w)
+lisa_poverty = Moran_Local(gdf['poverty_rate'].values, w, permutations=999, seed=42)
 
 # store results
 gdf['lisa_poverty_q'] = lisa_poverty.q

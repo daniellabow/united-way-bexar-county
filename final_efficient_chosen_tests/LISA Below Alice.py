@@ -25,7 +25,7 @@ w = Queen.from_dataframe(gdf)
 w.transform = 'r'
 
 # local Moran's I on below ALICE rate
-lisa_alice = Moran_Local(gdf['alice_rate'].values, w)
+lisa_alice = Moran_Local(gdf['alice_rate'].values, w, permutations=999, seed=42)
 
 # store LISA results
 gdf['lisa_alice_q'] = lisa_alice.q
