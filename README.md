@@ -47,7 +47,7 @@ While raw .csv files and generated graphs are not publicly visible in this repos
 ## 📁 Project Structure
 
 ```
-CHANGES HAVE BEEB MADE, WILL BE UPDATED ASAP
+CHANGES HAVE BEEN MADE, WILL BE UPDATED ASAP
 ```
 
 
