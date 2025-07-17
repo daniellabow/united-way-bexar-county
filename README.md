@@ -47,77 +47,7 @@ While raw .csv files and generated graphs are not publicly visible in this repos
 ## 📁 Project Structure
 
 ```
-UNITED-WAY-BEXAR-COUNTY/
-├── README.md
-├── .gitignore
-├── venv/
-│
-├── bexar_specific/
-│   ├── Bexar County ZIPs Tests.py
-│   ├── Bexar_Bivariate_ALICE_LISA.csv
-│   ├── Bexar_Bivariate_Poverty_LISA.csv
-│   ├── Bexar_Bivariate_Sum_LISA.csv
-│   ├── Bexar_County_Cleaned_ZIP_Data.csv
-│   ├── Bexar_County_ZIP_Eco_Indicator_Data.csv
-│
-├── bivariate_data/
-│   ├── Bivariate_ALICE_vs_CallerRate_LISA.csv
-│   ├── Bivariate_Poverty_vs_CallerRate_LISA.csv
-│   ├── Bivariate_PovertyALICE_vs_CallerRate_LISA.csv
-│
-├── graphs/
-│   ├── bexar LISA economic instability/
-│   ├── LISA economic instability/
-│   │   ├── LISA_ALICE_rate.png
-│   │   ├── LISA_callers_rate.png
-│   │   ├── LISA_instability.png
-│   │   ├── LISA_poverty_rate.png
-│   ├── nonprofit requested graphs/
-│   │   ├── heat map quartiles/
-│   │   │   ├── heat_map_caller_ALICE_rate.png
-│   │   │   ├── heat_map_caller_poverty_rate.png
-│   │   │   ├── heat_map_caller_rate_sum.png
-│   │   ├── heat map quartiles (new)/
-│   │   ├── spearmen zoomed in/
-│   │   │   ├── spearmen_caller_rate_ALICE_zoom.png
-│   │   │   ├── spearmen_caller_rate_poverty_zoom.png
-│   │   │   ├── spearmen_caller_rate_sum_zoom.png
-│   │   ├── spearmen outlier included/
-│   │   │   ├── spearmen_callers_rate_ALICE_rate.png
-│   │   │   ├── spearmen_callers_rate_poverty_rate.png
-│   │   │   ├── spearmen_callers_rate_sum.png
-│   │   │   ├── instability_ALICE_rate_by_ZIP.png
-│   │   │   ├── instability_poverty_ALICE_rate_by_ZIP.png
-│   │   │   ├── instability_poverty_rate_by_ZIP.png
-│   │   │   ├── total_callers_by_ZIP_map_quartile.png
-│   ├── strictly bexar county visuals/
-│       ├── bivariate_ALICE_caller_rate.png
-│       ├── bivariate_poverty_caller_rate.png
-│       ├── bivariate_sum_caller_rate.png
-│       ├── caller_rate_by_ZIP_map_quartile.png
-│       ├── spearmen_caller_rate_ALICE.png
-│
-├── starter/
-│   ├── Old Client ZIP Code Cleanup.py
-│   ├── Old_211_Client_Cleaned.csv
-│   ├── Old_Callers_By_Zip.csv
-│   ├── Old_Callers_Per_1000.csv
-│
-├── 211 Area Indicators_ZipZCTA.csv
-├── 211 Call Data_Client Tab_All Years.csv
-├── 211 Call Data_Interaction Tab_All Years.csv
-├── 211 Call Data_Referral Tab_All Years.csv
-├── 211 Caller Poverty Rate Heat Map.py
-├── 211 ZIP Morans I Analysis.py
-├── 211 ZIP Spearman Analysis.py
-├── 211_Demographic_Data_Cleaned.csv
-├── 211_Merged_ZIP_Economic_Instability.csv
-├── 211_Spearman_Correlation_Results.csv
-├── Community Indicator Metadata.csv
-├── Filter Clients Calls ZIP.py
-├── New_211_Client_Cleaned.csv
-├── Poverty Cleanup.py
-├── Top_ZIPs_Economic_Instability.csv
+CHANGES HAVE BEEB MADE, WILL BE UPDATED ASAP
 ```
 
 
