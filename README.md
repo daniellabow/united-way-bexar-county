@@ -36,7 +36,7 @@ We answer this through analysis of:
 ## 📁 Folder Glossary
 
 - `bexar_specific/` — Analysis and outputs restricted to Bexar County ZIP codes
-- `bivariate_data/` — Bivariate LISA output files across all ZIPs
+- `morans_i_data_csvs/` — Bivariate LISA output files across all ZIPs
 - `graphs/` — Final visualizations by theme (heat maps, LISA, Spearman, etc.)
 - `starter/` — Legacy or early versions of cleaned ZIP datasets
 
