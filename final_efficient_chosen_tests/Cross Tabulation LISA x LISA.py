@@ -3,6 +3,7 @@ import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+from matplotlib.offsetbox import AnchoredText
 '''
 This script performs cross-tabulation analysis between LISA results for economic need (poverty) and demand (caller rate).
 It generates a 4x4 matrix showing the relationship between local spatial autocorrelation in poverty rates
@@ -279,9 +280,23 @@ for idx, row in county_boundaries.iterrows():
     )
 
 # ZIP code labels on red/blue only
+'''
 for idx, row in labeled_zips.iterrows():
     ax.annotate(
         text=row['zip_code'],
+        xy=(row.geometry.centroid.x, row.geometry.centroid.y),
+        fontsize=8,
+        color='white',
+        ha='center',
+        va='center'
+    )
+'''
+# only label ZIP 78861 for now
+zip_to_label = '78861'
+if zip_to_label in gdf['zip_code'].values:
+    row = gdf[gdf['zip_code'] == zip_to_label].iloc[0]
+    ax.annotate(
+        text=zip_to_label,
         xy=(row.geometry.centroid.x, row.geometry.centroid.y),
         fontsize=8,
         color='white',
@@ -301,5 +316,22 @@ ax.legend(handles=legend_elements, title="Need vs Demand", loc='upper right')
 ax.set_title("ZIP-level Map: Caller Rate vs Below ALICE LISA Quadrants", fontsize=15)
 ax.axis('off')
 
+# extract ZIPs into string lists grouped by type
+red_zips = labeled_zips[labeled_zips['color'] == '#D12626']['zip_code'].tolist()
+blue_zips = labeled_zips[labeled_zips['color'] == '#21296B']['zip_code'].tolist()
+
+# Build ZIP text for display
+zip_legend_text = (
+    "Underserved ZIPs:\n" + ', '.join(red_zips) + "\n\n" +
+    "Misaligned ZIPs:\n" + ', '.join(blue_zips)
+)
+
+# Add as anchored textbox on the side
+at = AnchoredText(zip_legend_text,
+                  prop=dict(size=9), frameon=True,
+                  loc='lower left',  # adjust as needed
+                  bbox_to_anchor=(1.05, 0), bbox_transform=ax.transAxes,
+                  borderpad=0.5)
+ax.add_artist(at)
 plt.tight_layout()
 plt.show()
