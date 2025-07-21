@@ -259,7 +259,9 @@ gdf['color'] = gdf['combo'].apply(assign_color)
 
 # filter ZIPs with red or blue color
 labeled_zips = gdf[gdf['color'].isin(['#21296B', '#D12626'])]
-
+# Check red ZIPs that have missing county names
+missing_county = labeled_zips[labeled_zips['County_Name'].isna()]
+print(missing_county[['zip_code', 'combo']])
 
 # plot map
 fig, ax = plt.subplots(figsize=(12, 12))
@@ -319,7 +321,9 @@ ax.axis('off')
 # extract ZIPs into string lists grouped by type
 red_zips = labeled_zips[labeled_zips['color'] == '#D12626']['zip_code'].tolist()
 blue_zips = labeled_zips[labeled_zips['color'] == '#21296B']['zip_code'].tolist()
-
+print("Red ZIPs:", red_zips)
+print("Blue ZIPs:", blue_zips)
+print("Total red:", len(red_zips), "Total blue:", len(blue_zips))
 # Build ZIP text for display
 zip_legend_text = (
     "Underserved ZIPs:\n" + ', '.join(red_zips) + "\n\n" +
