@@ -293,13 +293,13 @@ blue_zips = labeled_zips[labeled_zips['color'] == '#21296B']['zip_code'].tolist(
 print("Red ZIPs:", red_zips)
 print("Blue ZIPs:", blue_zips)
 print("Total red:", len(red_zips), "Total blue:", len(blue_zips))
-# Build ZIP text for display
+# build ZIP text
 zip_legend_text = (
     "Underserved ZIPs:\n" + ', '.join(red_zips) + "\n\n" +
     "Misaligned ZIPs:\n" + ', '.join(blue_zips)
 )
 
-# Add as anchored textbox on the side
+# add anchored textbox on side
 at = AnchoredText(zip_legend_text,
                   prop=dict(size=9), frameon=True,
                   loc='lower left',  # adjust as needed

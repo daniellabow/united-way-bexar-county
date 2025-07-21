@@ -1,0 +1,103 @@
+import pandas as pd
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from matplotlib.offsetbox import AnchoredText
+
+# Load ZIP shapefile
+gdf_shape = gpd.read_file("https://raw.githubusercontent.com/OpenDataDE/State-zip-code-geojson/master/tx_texas_zip_codes_geo.min.json")
+gdf_shape['zip_code'] = gdf_shape['ZCTA5CE10'].astype(str).str.zfill(5)
+
+# Load LISA results for Caller Rate and Poverty
+df_callers = pd.read_csv("final_efficient_chosen_tests/BEXAR_LISA_CallerRate_Results.csv")
+df_poverty = pd.read_csv("final_efficient_chosen_tests/BEXAR_LISA_Poverty_Results.csv")
+
+# Merge LISA results
+df = pd.merge(df_callers[['zip_code', 'lisa_callers_quad_label']],
+              df_poverty[['zip_code', 'lisa_poverty_quad_label']],
+              on='zip_code', how='inner')
+
+# Ensure string ZIPs
+df['zip_code'] = df['zip_code'].astype(str).str.zfill(5)
+gdf_shape['zip_code'] = gdf_shape['zip_code'].astype(str).str.zfill(5)
+
+# Merge with shapefile
+gdf = gdf_shape.merge(df, on='zip_code', how='inner')
+gdf['County_Name'] = 'Bexar'  # manually assign to limit to Bexar only
+gdf = gdf[gdf['County_Name'] == 'Bexar']
+
+# Create combo label for poverty vs callers
+gdf['combo'] = list(zip(gdf['lisa_poverty_quad_label'], gdf['lisa_callers_quad_label']))
+
+# Color logic
+labels = ['HH', 'LH', 'HL', 'LL', 'NS']
+blue_cells = [('LH', 'HH'), ('LH', 'HL'), ('LL', 'HH'), ('LL', 'HL')]
+red_cells  = [('HH', 'LH'), ('HH', 'LL'), ('HL', 'LH'), ('HL', 'LL')]
+ns_cells   = [('NS', x) for x in labels] + [(x, 'NS') for x in labels]
+
+def assign_color(combo):
+    if combo in blue_cells:
+        return '#21296B'  # Misalignment
+    elif combo in red_cells:
+        return '#D12626'  # Underserved
+    elif combo in ns_cells:
+        return '#FFFFFF'  # Not Significant
+    else:
+        return '#CCCCCC'  # Aligned
+
+gdf['color'] = gdf['combo'].apply(assign_color)
+
+# Filter ZIPs with red or blue color
+labeled_zips = gdf[gdf['color'].isin(['#21296B', '#D12626'])]
+
+# Plot
+fig, ax = plt.subplots(figsize=(12, 12))
+gdf.plot(ax=ax, color="#F5F5F5", edgecolor='lightgray')
+gdf.plot(ax=ax, color=gdf['color'], edgecolor='black', linewidth=0.3)
+
+# Only label ZIP 78861 for now
+zip_to_label = '78861'
+if zip_to_label in gdf['zip_code'].values:
+    row = gdf[gdf['zip_code'] == zip_to_label].iloc[0]
+    ax.annotate(
+        text=zip_to_label,
+        xy=(row.geometry.centroid.x, row.geometry.centroid.y),
+        fontsize=8,
+        color='white',
+        ha='center',
+        va='center'
+    )
+
+# Legend
+legend_elements = [
+    mpatches.Patch(color='#21296B', label='High Calls + Low Need (Misalignment)'),
+    mpatches.Patch(color='#D12626', label='Low Calls + High Need (Underserved)'),
+    mpatches.Patch(color='#CCCCCC', label='Aligned (HH/LL)'),
+    mpatches.Patch(color='#FFFFFF', label='Not Statistically Significant')
+]
+ax.legend(handles=legend_elements, title="Need vs Demand", loc='upper right')
+ax.set_title("Bexar ZIP Map: Caller Rate vs Poverty LISA Quadrants", fontsize=15)
+ax.axis('off')
+
+# Legend ZIPs
+red_zips = labeled_zips[labeled_zips['color'] == '#D12626']['zip_code'].tolist()
+blue_zips = labeled_zips[labeled_zips['color'] == '#21296B']['zip_code'].tolist()
+print("Red ZIPs:", red_zips)
+print("Blue ZIPs:", blue_zips)
+print("Total red:", len(red_zips), "Total blue:", len(blue_zips))
+
+# Display in textbox
+zip_legend_text = (
+    "Underserved ZIPs:\n" + ', '.join(red_zips) + "\n\n" +
+    "Misaligned ZIPs:\n" + ', '.join(blue_zips)
+)
+
+at = AnchoredText(zip_legend_text,
+                  prop=dict(size=9), frameon=True,
+                  loc='lower left',
+                  bbox_to_anchor=(1.05, 0), bbox_transform=ax.transAxes,
+                  borderpad=0.5)
+ax.add_artist(at)
+
+plt.tight_layout()
+plt.show()
