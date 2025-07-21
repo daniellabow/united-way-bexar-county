@@ -39,4 +39,4 @@ gdf[['zip_code', 'lisa_poverty_q', 'lisa_poverty_p', 'lisa_poverty_sig', 'lisa_p
     "final_efficient_chosen_tests/BEXAR_LISA_Poverty_Results.csv", index=False
 )
 
-print("LISA on Poverty complete. Results saved to 'BEXAR_LISA_Poverty_Results.csv'")
+print("LISA on Poverty complete! Results saved to 'BEXAR_LISA_Poverty_Results.csv'")

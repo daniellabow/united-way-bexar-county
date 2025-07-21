@@ -36,7 +36,7 @@ gdf['lisa_alice_quad_label'] = gdf.apply(
 
 # Save results
 gdf[['zip_code', 'lisa_alice_q', 'lisa_alice_p', 'lisa_alice_sig', 'lisa_alice_quad_label']].to_csv(
-    "final_efficient_chosen_tests/LISA_Below_ALICE_Results.csv", index=False
+    "final_efficient_chosen_tests/BEXAR_LISA_Below_ALICE_Results.csv", index=False
 )
 
-print("LISA on Below ALICE complete. Results saved to 'LISA_Below_ALICE_Results.csv'")
+print("LISA on Below ALICE complete! Results saved to 'BEXAR_LISA_Below_ALICE_Results.csv'")
